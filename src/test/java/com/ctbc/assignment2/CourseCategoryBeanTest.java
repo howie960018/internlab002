@@ -11,11 +11,13 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// @DataJpaTest: Spring Boot 提供針對 JPA Repository 進行的切片測試 (Slice test)。
+// 自動加態 In-memory DB，不載入 Controller 等元件，各 @Test 結束會 rollback 保持環境乾淨。
 @DataJpaTest
 public class CourseCategoryBeanTest {
 
     @Autowired
-    private TestEntityManager em;
+    private TestEntityManager em; // 提供更底層的 DB 管理器工具 (如 flush, clear) 來精準控制測試
 
     @Autowired
     private CourseBeanRepository courseRepo;
@@ -23,6 +25,7 @@ public class CourseCategoryBeanTest {
     @Autowired
     private CourseCategoryBeanRepository categoryRepo;
 
+    // @Test: JUnit 測試方法標註
     @Test
     public void testSaveCategory() {
         CourseCategoryBean cat = new CourseCategoryBean();

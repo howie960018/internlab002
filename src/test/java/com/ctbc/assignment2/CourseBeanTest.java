@@ -13,6 +13,7 @@ import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// @DataJpaTest: Spring Boot 專門用來測試 JPA 的註解。它會自動設定記憶體資料庫 (In-memory DB)，並只載入與 JPA 相關的設定。
 @DataJpaTest
 public class CourseBeanTest {
 
@@ -29,6 +30,7 @@ public class CourseBeanTest {
     //   基本儲存與修改
     // ════════════════════════════════════════════════════
 
+    // @Test: JUnit 提供的註解，標示這是一個測試方法
     @Test
     public void testSaveCourse() {
         CourseCategoryBean cat = new CourseCategoryBean();

@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+// @SpringBootTest: 整合測試註解，會啟動完整的 Spring 應用程式上下文(Context)，包含了所有的 Bean (Service, Repository 等)
 @SpringBootTest
 public class ServiceTest {
 
@@ -27,6 +28,7 @@ public class ServiceTest {
     //   基本 CRUD
     // ════════════════════════════════════════════════════
 
+    // @Test: 宣告此方法為獨立的測試案例
     @Test
     public void testSaveAndFindCategory() {
         CourseCategoryBean cat = new CourseCategoryBean();

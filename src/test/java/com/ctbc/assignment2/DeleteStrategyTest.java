@@ -11,11 +11,12 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// @DataJpaTest: 專心測試資料庫層 (DB)。自動組態 In-memory DB，不載入 Controller 等元件，測試速度快且資料在各個 @Test 結束後會自動 Rollback
 @DataJpaTest
 public class DeleteStrategyTest {
 
     @Autowired
-    private TestEntityManager em;
+    private TestEntityManager em; // TestEntityManager 是一個給測項用的特殊對象，可以用來直接控制 entityManager(快取、flush)
 
     @Autowired
     private CourseBeanRepository courseRepo;

@@ -25,17 +25,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+// @WebMvcTest 負責啟動 Controller 層環境，並註冊指定的 Web 控制器，不會完整載入整個 Spring (沒包含 Service 跟 DB 層)
 @WebMvcTest(controllers = {
         CourseWebController.class,
         CategoryWebController.class,
         HomeWebController.class
 })
+// 導入我們想要測試的例外處理器（因為它可能有 @ControllerAdvice 但在這裡預設沒被掃到）
 @Import(WebExceptionHandler.class)
 public class WebExceptionHandlerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private MockMvc mockMvc; 
 
+    // 使用 @MockBean 在應用上下文中構造一個替身 (虛擬服務) 來替代原本的實體，只專注於測試 Controller 收到例外時的反應
     @MockBean
     private CourseBeanService courseService;
 

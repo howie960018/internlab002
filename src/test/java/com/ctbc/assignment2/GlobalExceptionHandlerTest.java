@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+// @WebMvcTest: 專門用來測試 Web 層 (Controller) 的註解。這會帶來輕量級的啟動，只載入與 MVC 相關的元件，不會載入整個 Service 或 DB 層。
 @WebMvcTest(controllers = {
         CourseBeanRestController.class,
         CategoryBeanRestController.class
@@ -32,8 +33,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class GlobalExceptionHandlerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private MockMvc mockMvc; // MockMvc 是 Spring Test 提供來模擬 HTTP 請求與驗證回應的工具
 
+    // @MockBean: 在 Spring 容器中建立並注入一個 Mock (假) 物件，這樣 Controller 就能使用它，而不依賴真實的資料庫。
     @MockBean
     private CourseBeanService courseService;
 
@@ -44,8 +46,10 @@ public class GlobalExceptionHandlerTest {
     //   404 ResourceNotFoundException
     // ════════════════════════════════════════════════════
 
+    // @Test: Test 標記
     @Test
     public void test404_查詢不存在的課程() throws Exception {
+        // when(...).thenThrow(...): Mockito 語法。設定「當呼叫 courseService.findById(99999L)」時，強制丟出 ResourceNotFoundException
         when(courseService.findById(99999L))
                 .thenThrow(new ResourceNotFoundException("Course not found: 99999"));
 

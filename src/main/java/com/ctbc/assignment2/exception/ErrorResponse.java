@@ -2,6 +2,7 @@ package com.ctbc.assignment2.exception;
 
 import java.util.Date;
 
+// 自定義錯誤回應物件：用於封裝 API 發生例外時的回傳資訊
 public class ErrorResponse {
     private Date timestamp;
     private String message;

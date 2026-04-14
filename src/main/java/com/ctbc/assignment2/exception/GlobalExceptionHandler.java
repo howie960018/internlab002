@@ -18,10 +18,22 @@ import java.util.Date;
 import java.util.stream.Collectors;
 
 
+/**
+ * 全域例外處理 (Global Exception Handler)
+ * 
+ * - @RestControllerAdvice: 這是一個切面 (AOP) 工具。加上這個標籤，代表這是一個全域級別的錯誤攔截器。
+ *   只要 basePackages 底下的 Controller 發生例外，且沒被 try-catch 攔住，就會往外拋到這裡處理。
+ *   由於它是 @ControllerAdvice 和 @ResponseBody 的組合，因此回傳值會自動被轉換為 JSON 格式 (符合 RESTful API 習慣)。
+ * - ResponseEntityExceptionHandler: Spring 提供的實用基礎類別。裡面已經寫好了處理一些標準 Spring MVC Exception 的模板，我們可以重寫(override)部分方法即可。
+ */
 @RestControllerAdvice(basePackages = "com.ctbc.assignment2.controller.rest")
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     // ── 404：找不到資源 ──────────────────────────────────────────
+    /**
+     * @ExceptionHandler 標籤用來指定「當拋出何種 Exception 時，這支方法會負責接手處理」。
+     * 以這裡為例，當程式拋出 ResourceNotFoundException 時，會執行下方這行，回傳 404 及對應錯誤訊息給前端。
+     */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Object> handleResourceNotFound(
             ResourceNotFoundException ex, WebRequest request) {
@@ -96,6 +108,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     // ── 500：未預期例外（catch-all） ─────────────────────────────
+    /**
+     * 預設處理所有未分類的 Exception
+     * 
+     * 如果發生的錯誤沒有上述任何一個對應的 @ExceptionHandler 攔截，就會跌入這個最大的兜底防線 (Exception.class)。
+     * 這能確保就算程式出錯，前端也能收到格式一致 (JSON)、狀態碼合理的錯誤回覆 (如 HTTP 500 Server Error)。
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllExceptions(
             Exception ex, WebRequest request) {
