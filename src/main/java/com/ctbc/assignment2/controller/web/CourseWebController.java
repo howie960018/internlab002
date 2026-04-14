@@ -1,7 +1,6 @@
 package com.ctbc.assignment2.controller.web;
 
 import com.ctbc.assignment2.bean.CourseBean;
-import com.ctbc.assignment2.bean.CourseCategoryBean;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
 import com.ctbc.assignment2.service.CourseBeanService;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
