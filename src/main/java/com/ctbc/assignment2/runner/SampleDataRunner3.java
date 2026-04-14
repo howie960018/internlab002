@@ -36,14 +36,11 @@ public class SampleDataRunner3 implements CommandLineRunner {
         course.setCategory(cat);
         courseRepo.save(course);
 
-        // 測試情境 [set_null]：
-        // 為了不讓刪除類別時把裡面的課程一起刪掉(違反外鍵規則)，我們手動先把課程身上的 category 設為 null
-        course.setCategory(null);
-        courseRepo.save(course);       // 先更新課程資料 (外鍵為空)
-        categoryRepo.deleteById(cat.getId()); // 安全刪除該分類
+        // 測試情境 [cascade]：
+        // 刪除分類時，底下課程會一起被刪掉 (依照 CourseCategoryBean 的 cascade = ALL + orphanRemoval)
+        categoryRepo.deleteById(cat.getId());
 
-        System.out.println("✅ set_null：課程還在，category 變成 null");
-        System.out.println("課程名稱：" + courseRepo.findById(course.getId()).get().getCourseName());
-        System.out.println("課程類別：" + courseRepo.findById(course.getId()).get().getCategory());
+        System.out.println("✅ cascade：分類刪除後，課程也被刪除");
+        System.out.println("課程是否存在：" + courseRepo.findById(course.getId()).isPresent());
     }
 }
