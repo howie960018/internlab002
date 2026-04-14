@@ -2,6 +2,7 @@ package com.ctbc.assignment2.service;
 
 import com.ctbc.assignment2.bean.CourseBean;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 課程服務介面 (Service Interface)
@@ -15,11 +16,11 @@ public interface CourseBeanService {
     List<CourseBean> findAll();
     
     // 根據課程的 ID 找出特定的課程
-    CourseBean findById(Long id);
+    CourseBean findById(UUID id);
     
     // 儲存課程 (包含「新增」與「修改」)
     CourseBean save(CourseBean course);
     
     // 根據課程的 ID 刪除特定課程
-    void deleteById(Long id);
+    void deleteById(UUID id);
 }

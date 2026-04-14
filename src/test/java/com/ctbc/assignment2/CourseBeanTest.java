@@ -251,7 +251,7 @@ public class CourseBeanTest {
         course.setPrice(150.0);
         courseRepo.save(course);
         em.flush();
-        Long id = course.getId();
+        java.util.UUID id = course.getId();
 
         // 刪除！
         courseRepo.deleteById(id);

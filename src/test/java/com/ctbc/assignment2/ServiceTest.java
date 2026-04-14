@@ -10,6 +10,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.TransactionSystemException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -88,7 +89,7 @@ public class ServiceTest {
         course.setCourseName("待刪除課程");
         course.setPrice(500.0);
         CourseBean saved = courseService.save(course);
-        Long savedId = saved.getId();
+        java.util.UUID savedId = saved.getId();
 
         courseService.deleteById(savedId);
 
@@ -99,20 +100,20 @@ public class ServiceTest {
 
     @Test
     public void testFindByIdNotFound() {
-        assertThrows(ResourceNotFoundException.class, () -> courseService.findById(99999L));
+        assertThrows(ResourceNotFoundException.class, () -> courseService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")));
         System.out.println("✅ testFindByIdNotFound 通過");
     }
 
     @Test
     public void testDeleteNonExistentCourse() {
         // 刪除一個不存在的 ID 不應該使得系統當機崩潰，所以要使用 assertDoesNotThrow 保證無事發生
-        assertDoesNotThrow(() -> courseService.deleteById(99999L));
+        assertDoesNotThrow(() -> courseService.deleteById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")));
         System.out.println("✅ testDeleteNonExistentCourse 通過");
     }
 
     @Test
     public void testDeleteNonExistentCategory() {
-        assertDoesNotThrow(() -> categoryService.deleteById(99999L));
+        assertDoesNotThrow(() -> categoryService.deleteById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")));
         System.out.println("✅ testDeleteNonExistentCategory 通過");
     }
 
@@ -122,7 +123,7 @@ public class ServiceTest {
         course.setCourseName("原始名稱");
         course.setPrice(100.0);
         CourseBean saved = courseService.save(course);
-        Long savedId = saved.getId();
+        java.util.UUID savedId = saved.getId();
 
         // 把撈出來的物件修改內容後再存進去一次 (Spring Data JPA 會自動判斷這是 Update)
         saved.setCourseName("修改後名稱");
@@ -137,7 +138,7 @@ public class ServiceTest {
 
     @Test
     public void testFindCategoryByIdNotFound() {
-        assertThrows(ResourceNotFoundException.class, () -> categoryService.findById(99999L));
+        assertThrows(ResourceNotFoundException.class, () -> categoryService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")));
         System.out.println("✅ testFindCategoryByIdNotFound 通過");
     }
 
@@ -274,7 +275,11 @@ public class ServiceTest {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("  ");
 
-        assertThrows(ConstraintViolationException.class, () -> categoryService.save(cat));
+        TransactionSystemException ex = assertThrows(
+                TransactionSystemException.class,
+                () -> categoryService.save(cat)
+        );
+        assertThat(ex.getRootCause()).isInstanceOf(ConstraintViolationException.class);
         System.out.println("✅ testSaveCategoryWithEmptyName_JPA_Validation觸發 通過");
     }
 
@@ -285,7 +290,11 @@ public class ServiceTest {
         course.setCourseName("負價格課程_Bypass");
         course.setPrice(-100.0);
 
-        assertThrows(ConstraintViolationException.class, () -> courseService.save(course));
+        TransactionSystemException ex = assertThrows(
+                TransactionSystemException.class,
+                () -> courseService.save(course)
+        );
+        assertThat(ex.getRootCause()).isInstanceOf(ConstraintViolationException.class);
         System.out.println("✅ testSaveCourseWithNegativePrice_JPA_Validation觸發 通過");
     }
 

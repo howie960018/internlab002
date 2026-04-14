@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 課程分類 REST 控制器 (REST Controller)
@@ -36,7 +37,7 @@ public class CategoryBeanRestController {
      * @PathVariable 讓 Spring 幫我們將 URL 路徑裡面的變數 (也就是 {id})，放到我們的方法參數中。
      */
     @GetMapping("/{id}")
-    public CourseCategoryBean getById(@PathVariable Long id) {
+    public CourseCategoryBean getById(@PathVariable java.util.UUID id) {
         return categoryService.findById(id);
     }
 
@@ -45,7 +46,7 @@ public class CategoryBeanRestController {
      * 根據傳入的分類 ID，將該分類刪除。
      */
     @DeleteMapping("/{id}")
-    public void deleteById(@PathVariable Long id) {
+    public void deleteById(@PathVariable java.util.UUID id) {
         categoryService.deleteById(id);
     }
 

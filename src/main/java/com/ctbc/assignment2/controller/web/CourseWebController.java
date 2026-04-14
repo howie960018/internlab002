@@ -11,6 +11,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+import java.util.UUID;
+
 /**
  * 課程專用的網頁控制器 (Web Controller)
  * 主要用以處理與課程介面操作相關的邏輯 (負責導向到 Thymeleaf 的 HTML 畫面)。
@@ -59,7 +61,7 @@ public class CourseWebController {
     @PostMapping("/save")
     public String save(@Valid @ModelAttribute("course") CourseBean course,
                        BindingResult bindingResult,
-                       @RequestParam(required = false) Long categoryId,
+                       @RequestParam(required = false) UUID categoryId,
                        Model model) {
         // 如果傳來的資料不符合規則(例如名稱空白之類)，這裡 BindingResult 就會抓到
         if (bindingResult.hasErrors()) {
@@ -92,7 +94,7 @@ public class CourseWebController {
      * @return 前往前台填寫表單的名稱 "course/form"
      */
     @GetMapping("/edit/{id}")
-    public String edit(@PathVariable Long id, Model model) {
+    public String edit(@PathVariable UUID id, Model model) {
         model.addAttribute("course", courseService.findById(id));
         model.addAttribute("categories", categoryService.findAll());
         return "course/form";
@@ -104,7 +106,7 @@ public class CourseWebController {
      * @param id 欲刪除的課程 ID
      */
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Long id) {
+    public String delete(@PathVariable UUID id) {
         courseService.deleteById(id);
         return "redirect:/course/list";
     }

@@ -10,6 +10,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+import java.util.UUID;
+
 /**
  * 課程分類專用的網頁控制器 (Web Controller)
  * 主要用以處理與課程分類介面操作相關的邏輯 (負責導向到 Thymeleaf 的層級 HTML 畫面)。
@@ -75,7 +77,7 @@ public class CategoryWebController {
      * 點下清單的編輯按鈕時，此方法會利用 id 從資料庫查出現存的類別然後塞進表單中供使用者編輯。
      */
     @GetMapping("/edit/{id}")
-    public String edit(@PathVariable Long id, Model model) {
+    public String edit(@PathVariable UUID id, Model model) {
         model.addAttribute("category", categoryService.findById(id));
         return "category/form";
     }
@@ -85,7 +87,7 @@ public class CategoryWebController {
      * @param id 取出網址上的 id，告訴服務層 (Service) 把這筆分類給砍了。
      */
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Long id) {
+    public String delete(@PathVariable UUID id) {
         categoryService.deleteById(id);
         return "redirect:/category/list";
     }

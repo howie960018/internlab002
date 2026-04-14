@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 課程 REST 控制器，提供課程相關的 API 介面。
@@ -40,7 +41,7 @@ public class CourseBeanRestController {
      * @return 符合 ID 的課程物件
      */
     @GetMapping("/{id}")
-    public CourseBean getById(@PathVariable Long id) {
+    public CourseBean getById(@PathVariable java.util.UUID id) {
         return courseService.findById(id);
     }
 
@@ -50,7 +51,7 @@ public class CourseBeanRestController {
      * @param id 要刪除的課程 ID
      */
     @DeleteMapping("/{id}")
-    public void deleteById(@PathVariable Long id) {
+    public void deleteById(@PathVariable java.util.UUID id) {
         courseService.deleteById(id);
     }
 
@@ -87,7 +88,7 @@ public class CourseBeanRestController {
     @PostMapping("/category/{categoryId}")
     public CourseBean saveWithCategory(
             @Valid @RequestBody CourseBean course,
-            @PathVariable Long categoryId) {
+            @PathVariable java.util.UUID categoryId) {
         // 先根據分類 ID 尋找並載入分類物件
         CourseCategoryBean category = categoryService.findById(categoryId);
         // 設定課程的關聯分類

@@ -56,53 +56,53 @@ public class WebExceptionHandlerTest {
     @Test
     public void testWeb404_課程不存在_導到error頁() throws Exception {
         // 設定假人
-        when(courseService.findById(99999L))
-                .thenThrow(new ResourceNotFoundException("Course not found: 99999"));
+        when(courseService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")))
+                .thenThrow(new ResourceNotFoundException("Course not found: 00000000-0000-0000-0000-000000009999"));
 
         // 去敲擊網頁修改畫面
-        mockMvc.perform(get("/course/edit/99999"))
+        mockMvc.perform(get("/course/edit/00000000-0000-0000-0000-000000009999"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error")) // 預期它會把我們導去 error.html
-                .andExpect(model().attribute("errorMessage", "Course not found: 99999")); // 預期會把錯誤文字帶到畫面的 errorMessage 中
+                .andExpect(model().attribute("errorMessage", "Course not found: 00000000-0000-0000-0000-000000009999")); // 預期會把錯誤文字帶到畫面的 errorMessage 中
 
         System.out.println("✅ testWeb404_課程不存在_導到error頁 通過");
     }
 
     @Test
     public void testWeb404_類別不存在_導到error頁() throws Exception {
-        when(categoryService.findById(99999L))
-                .thenThrow(new ResourceNotFoundException("Category not found: 99999"));
+        when(categoryService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")))
+                .thenThrow(new ResourceNotFoundException("Category not found: 00000000-0000-0000-0000-000000009999"));
 
-        mockMvc.perform(get("/category/edit/99999"))
+        mockMvc.perform(get("/category/edit/00000000-0000-0000-0000-000000009999"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
-                .andExpect(model().attribute("errorMessage", "Category not found: 99999"));
+                .andExpect(model().attribute("errorMessage", "Category not found: 00000000-0000-0000-0000-000000009999"));
 
         System.out.println("✅ testWeb404_類別不存在_導到error頁 通過");
     }
 
     @Test
     public void testWeb404_刪除不存在的課程_導到error頁() throws Exception {
-        doThrow(new ResourceNotFoundException("Course not found: 99999"))
-                .when(courseService).deleteById(99999L);
+        doThrow(new ResourceNotFoundException("Course not found: 00000000-0000-0000-0000-000000009999"))
+                .when(courseService).deleteById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999"));
 
-        mockMvc.perform(get("/course/delete/99999"))
+        mockMvc.perform(get("/course/delete/00000000-0000-0000-0000-000000009999"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
-                .andExpect(model().attribute("errorMessage", "Course not found: 99999"));
+                .andExpect(model().attribute("errorMessage", "Course not found: 00000000-0000-0000-0000-000000009999"));
 
         System.out.println("✅ testWeb404_刪除不存在的課程_導到error頁 通過");
     }
 
     @Test
     public void testWeb404_刪除不存在的類別_導到error頁() throws Exception {
-        doThrow(new ResourceNotFoundException("Category not found: 99999"))
-                .when(categoryService).deleteById(99999L);
+        doThrow(new ResourceNotFoundException("Category not found: 00000000-0000-0000-0000-000000009999"))
+                .when(categoryService).deleteById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999"));
 
-        mockMvc.perform(get("/category/delete/99999"))
+        mockMvc.perform(get("/category/delete/00000000-0000-0000-0000-000000009999"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
-                .andExpect(model().attribute("errorMessage", "Category not found: 99999"));
+                .andExpect(model().attribute("errorMessage", "Category not found: 00000000-0000-0000-0000-000000009999"));
 
         System.out.println("✅ testWeb404_刪除不存在的類別_導到error頁 通過");
     }

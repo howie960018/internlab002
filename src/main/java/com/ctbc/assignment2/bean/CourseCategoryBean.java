@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 課程類別資料模型 (Entity)
@@ -13,10 +14,10 @@ import java.util.List;
 @Table(name = "course_category")
 public class CourseCategoryBean {
 
-    // 類別編號 (主鍵，由資料庫自動產生遞增數字)
+    // 類別編號 (主鍵，由資料庫自動產生UUID)
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     // 類別名稱，不可為空白
     @NotBlank(message = "類別名稱不可為空")
@@ -34,8 +35,8 @@ public class CourseCategoryBean {
 
     // ================= 以下為 Getter / Setter (讓其他程式可以存取或修改這些私有屬性) =================
     
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public String getCategoryName() { return categoryName; }
     public void setCategoryName(String categoryName) { this.categoryName = categoryName; }

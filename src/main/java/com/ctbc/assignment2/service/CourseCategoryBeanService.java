@@ -2,6 +2,7 @@ package com.ctbc.assignment2.service;
 
 import com.ctbc.assignment2.bean.CourseCategoryBean;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 課程分類服務介面 (Service Interface)
@@ -14,11 +15,11 @@ public interface CourseCategoryBeanService {
     List<CourseCategoryBean> findAll();
 
     // 根據分類的 ID 找出特定的分類
-    CourseCategoryBean findById(Long id);
+    CourseCategoryBean findById(UUID id);
 
     // 儲存課程分類 (這方法會同時處理「新增」這個分類或是「修改」這個分類)
     CourseCategoryBean save(CourseCategoryBean category);
 
     // 根據分類的 ID 刪除特定的分類
-    void deleteById(Long id);
+    void deleteById(UUID id);
 }

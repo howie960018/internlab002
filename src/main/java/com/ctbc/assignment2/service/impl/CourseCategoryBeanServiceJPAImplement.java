@@ -8,6 +8,7 @@ import com.ctbc.assignment2.service.CourseCategoryBeanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 課程分類服務的具體實作類別 (Service Implementation)
@@ -34,7 +35,7 @@ public class CourseCategoryBeanServiceJPAImplement implements CourseCategoryBean
      * 若遇到找不到的狀況，避免回傳可能會拋出 Null 機率的 null，我們故意拋出自訂的 ResourceNotFoundException 異常。
      */
     @Override
-    public CourseCategoryBean findById(Long id) {
+    public CourseCategoryBean findById(UUID id) {
         return repo.findById(id)
                    .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + id));
     }
@@ -81,7 +82,7 @@ public class CourseCategoryBeanServiceJPAImplement implements CourseCategoryBean
      * 將指定的分類，由資料庫驅逐出境。
      */
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         repo.deleteById(id);
     }
 }

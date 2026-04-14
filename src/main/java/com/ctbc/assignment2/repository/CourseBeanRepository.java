@@ -2,13 +2,14 @@ package com.ctbc.assignment2.repository;
 
 import com.ctbc.assignment2.bean.CourseBean;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.UUID;
 
 /**
  * 課程資料存取庫 (Repository)。
  * 透過繼承 JpaRepository，Spring Data JPA 會自動幫我們實作 CRUD 等基本的資料庫操作。
- * 這邊指定的泛型：<CourseBean, Long>，代表這個 Repository 是「為了操作 CourseBean，且其主鍵(ID)型態為 Long」。
+ * 這邊指定的泛型：<CourseBean, UUID>，代表這個 Repository 是「為了操作 CourseBean，且其主鍵(ID)型態為 UUID」。
  */
-public interface CourseBeanRepository extends JpaRepository<CourseBean, Long> {
+public interface CourseBeanRepository extends JpaRepository<CourseBean, UUID> {
     
     /**
      * 檢查給定的「課程名稱」在資料庫中是否已經存在 (回傳 boolean)。
@@ -23,5 +24,5 @@ public interface CourseBeanRepository extends JpaRepository<CourseBean, Long> {
      * @param courseName 想檢查的新課程名稱
      * @param id 排除的課程 ID (通常傳入欲更新課程的自己的 ID)
      */
-    boolean existsByCourseNameAndIdNot(String courseName, Long id);
+    boolean existsByCourseNameAndIdNot(String courseName, UUID id);
 }

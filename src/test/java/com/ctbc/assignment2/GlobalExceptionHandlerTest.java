@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -60,13 +59,13 @@ public class GlobalExceptionHandlerTest {
     @Test
     public void test404_查詢不存在的課程() throws Exception {
         // 設定假人(Mock)劇本：只要你呼叫找 ID=99999 的，我就絕對丟出 Exception 嚇你
-        when(courseService.findById(99999L))
-                .thenThrow(new ResourceNotFoundException("Course not found: 99999"));
+        when(courseService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")))
+                .thenThrow(new ResourceNotFoundException("Course not found: 00000000-0000-0000-0000-000000009999"));
 
-        // 模擬使用 Postman 發送 GET 去 /api/course/99999
-        mockMvc.perform(get("/api/course/99999"))
+        // 模擬使用 Postman 發送 GET 去 /api/course/{uuid}
+        mockMvc.perform(get("/api/course/00000000-0000-0000-0000-000000009999"))
                 .andExpect(status().isNotFound()) // 預期它會給 404 (因為 GlobalExceptionHandler 寫了 @ResponseStatus(HttpStatus.NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("Course not found: 99999")) // 用 jsonPath 檢查回傳的 JSON 裡面的 message 內容
+                .andExpect(jsonPath("$.message").value("Course not found: 00000000-0000-0000-0000-000000009999")) // 用 jsonPath 檢查回傳的 JSON 裡面的 message 內容
                 .andExpect(jsonPath("$.timestamp").exists()) // 預期要有我們自定義回傳的好看 timestamp
                 .andExpect(jsonPath("$.details").exists()); // 預期要有請求路徑 details
 
@@ -76,24 +75,24 @@ public class GlobalExceptionHandlerTest {
     @Test
     public void test404_刪除不存在的課程() throws Exception {
         // 當 deleteById 方法不回傳東西(void)時，Mockito 設定假人的寫法是 doThrow().when()
-        org.mockito.Mockito.doThrow(new ResourceNotFoundException("Course not found: 99999"))
-                .when(courseService).deleteById(99999L);
+        org.mockito.Mockito.doThrow(new ResourceNotFoundException("Course not found: 00000000-0000-0000-0000-000000009999"))
+                .when(courseService).deleteById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999"));
 
-        mockMvc.perform(delete("/api/course/99999"))
+        mockMvc.perform(delete("/api/course/00000000-0000-0000-0000-000000009999"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Course not found: 99999"));
+                .andExpect(jsonPath("$.message").value("Course not found: 00000000-0000-0000-0000-000000009999"));
 
         System.out.println("✅ test404_刪除不存在的課程 通過");
     }
 
     @Test
     public void test404_查詢不存在的類別() throws Exception {
-        when(categoryService.findById(99999L))
-                .thenThrow(new ResourceNotFoundException("Category not found: 99999"));
+        when(categoryService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")))
+                .thenThrow(new ResourceNotFoundException("Category not found: 00000000-0000-0000-0000-000000009999"));
 
-        mockMvc.perform(get("/api/category/99999"))
+        mockMvc.perform(get("/api/category/00000000-0000-0000-0000-000000009999"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Category not found: 99999"))
+                .andExpect(jsonPath("$.message").value("Category not found: 00000000-0000-0000-0000-000000009999"))
                 .andExpect(jsonPath("$.timestamp").exists());
 
         System.out.println("✅ test404_查詢不存在的類別 通過");
@@ -101,12 +100,12 @@ public class GlobalExceptionHandlerTest {
 
     @Test
     public void test404_刪除不存在的類別() throws Exception {
-        org.mockito.Mockito.doThrow(new ResourceNotFoundException("Category not found: 5"))
-                .when(categoryService).deleteById(5L);
+        org.mockito.Mockito.doThrow(new ResourceNotFoundException("Category not found: 00000000-0000-0000-0000-000000000005"))
+                .when(categoryService).deleteById(java.util.UUID.fromString("00000000-0000-0000-0000-000000000005"));
 
-        mockMvc.perform(delete("/api/category/5"))
+        mockMvc.perform(delete("/api/category/00000000-0000-0000-0000-000000000005"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Category not found: 5"));
+                .andExpect(jsonPath("$.message").value("Category not found: 00000000-0000-0000-0000-000000000005"));
 
         System.out.println("✅ test404_刪除不存在的類別 通過");
     }
@@ -138,7 +137,7 @@ public class GlobalExceptionHandlerTest {
 
         mockMvc.perform(post("/api/course")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":2,\"courseName\":\"Spring Boot 入門\",\"price\":5000.0}"))
+                        .content("{\"id\":\"00000000-0000-0000-0000-000000000002\",\"courseName\":\"Spring Boot 入門\",\"price\":5000.0}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("課程名稱已存在：Spring Boot 入門"));
 
@@ -182,7 +181,7 @@ public class GlobalExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     /**
-     * 測試：當 Controller 的參數要求是 Long (數字 ID)，但某個呆瓜傳了英文字母 "abc" 怎麼辦？
+        * 測試：當 Controller 的參數要求是 UUID，但某個呆瓜傳了英文字母 "abc" 怎麼辦？
      * 我們的 GlobalExceptionHandler 必須攔截到 TypeMismatchException 把狀態轉成 400 Bad Request 回應回去。
      */
     @Test
@@ -305,7 +304,7 @@ public class GlobalExceptionHandlerTest {
     @Test
     public void test405_對course_id_送PUT() throws Exception {
         // /api/course/{id} 只有 GET + DELETE，送 PUT → 405
-        mockMvc.perform(put("/api/course/1")
+        mockMvc.perform(put("/api/course/00000000-0000-0000-0000-000000000001")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"courseName\":\"test\",\"price\":100.0}"))
                 .andExpect(status().isMethodNotAllowed())
@@ -317,7 +316,7 @@ public class GlobalExceptionHandlerTest {
     @Test
     public void test405_對category_id_送PUT() throws Exception {
         // /api/category/{id} 只有 GET + DELETE，送 PUT → 405
-        mockMvc.perform(put("/api/category/1")
+        mockMvc.perform(put("/api/category/00000000-0000-0000-0000-000000000001")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"categoryName\":\"test\"}"))
                 .andExpect(status().isMethodNotAllowed())
@@ -330,7 +329,7 @@ public class GlobalExceptionHandlerTest {
     @Test
     public void test405_對category_id_送PATCH() throws Exception {
         // /api/category/{id} 只有 GET + DELETE，送 PATCH → 405
-        mockMvc.perform(patch("/api/category/1"))
+        mockMvc.perform(patch("/api/category/00000000-0000-0000-0000-000000000001"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(jsonPath("$.message").exists());
 
@@ -369,10 +368,10 @@ public class GlobalExceptionHandlerTest {
 
     @Test
     public void test500_未預期例外() throws Exception {
-        when(courseService.findById(42L))
+        when(courseService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000000042")))
                 .thenThrow(new RuntimeException("Something bad happened"));
 
-        mockMvc.perform(get("/api/course/42"))
+        mockMvc.perform(get("/api/course/00000000-0000-0000-0000-000000000042"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message").value("Something bad happened"))
                 .andExpect(jsonPath("$.timestamp").exists());
@@ -398,10 +397,10 @@ public class GlobalExceptionHandlerTest {
 
     @Test
     public void testErrorResponse_三個欄位都存在() throws Exception {
-        when(courseService.findById(anyLong()))
+        when(courseService.findById(any()))
                 .thenThrow(new ResourceNotFoundException("Course not found: 1"));
 
-        mockMvc.perform(get("/api/course/1"))
+        mockMvc.perform(get("/api/course/00000000-0000-0000-0000-000000000001"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.message").exists())
@@ -412,12 +411,12 @@ public class GlobalExceptionHandlerTest {
 
     @Test
     public void testErrorResponse_details包含uri資訊() throws Exception {
-        when(courseService.findById(anyLong()))
+        when(courseService.findById(any()))
                 .thenThrow(new ResourceNotFoundException("Course not found: 7"));
 
-        mockMvc.perform(get("/api/course/7"))
+        mockMvc.perform(get("/api/course/00000000-0000-0000-0000-000000000007"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.details").value(org.hamcrest.Matchers.containsString("/api/course/7")));
+                .andExpect(jsonPath("$.details").value(org.hamcrest.Matchers.containsString("/api/course/00000000-0000-0000-0000-000000000007")));
 
         System.out.println("✅ testErrorResponse_details包含uri資訊 通過");
     }

@@ -1,6 +1,7 @@
 package com.ctbc.assignment2.bean;
 
 import java.util.Date;
+import java.util.UUID;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,10 +15,10 @@ import jakarta.validation.constraints.PositiveOrZero;
 @Table(name = "course")
 public class CourseBean {
 
-    // 課程編號 (主鍵，由資料庫自動產生遞增數字)
+    // 課程編號 (主鍵，由資料庫自動產生UUID)
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     // 課程名稱，不可為空白
     @NotBlank(message = "課程名稱不可為空")
@@ -63,8 +64,8 @@ public class CourseBean {
 
     // ================= 以下為 Getter / Setter (讓其他程式可以存取或修改這些私有屬性) =================
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public String getCourseName() { return courseName; }
     public void setCourseName(String courseName) { this.courseName = courseName; }

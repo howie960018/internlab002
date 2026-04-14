@@ -8,6 +8,7 @@ import com.ctbc.assignment2.service.CourseBeanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 課程服務的具體實作類別 (Service Implementation)
@@ -34,7 +35,7 @@ public class CourseBeanServiceJPAImplement implements CourseBeanService {
      * 如果找到了就回傳課程物件；如果找不到，就拋出我們自己設計好的 ResourceNotFoundException 例外。
      */
     @Override
-    public CourseBean findById(Long id) {
+    public CourseBean findById(UUID id) {
         return repo.findById(id)
                    .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + id));
     }
@@ -69,7 +70,7 @@ public class CourseBeanServiceJPAImplement implements CourseBeanService {
      * 刪除課程。直接委派給 Repository 的 deleteById 做苦力活。
      */
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(UUID id) {
         repo.deleteById(id);
     }
 }
