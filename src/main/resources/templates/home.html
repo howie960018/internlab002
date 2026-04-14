@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>首頁</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div class="container mt-4">
+    <h2>課程管理系統</h2>
+    <div class="mt-3">
+        <a th:href="@{/course/list}" class="btn btn-primary me-2">課程列表</a>
+        <a th:href="@{/category/list}" class="btn btn-secondary">類別列表</a>
+    </div>
+</div>
+</body>
+</html>

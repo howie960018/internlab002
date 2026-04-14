@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>錯誤</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div class="container mt-4" style="max-width: 680px;">
+
+    <div class="alert alert-danger">
+        <h5 class="alert-heading fw-bold"
+            th:text="${errorTitle} ?: '發生錯誤'">發生錯誤</h5>
+        <hr>
+
+        <!-- 主要錯誤訊息 -->
+        <p th:text="${errorMessage}">錯誤訊息</p>
+
+        <!-- 欄位驗証明細（BindException 時顯示） -->
+        <ul th:if="${fieldErrors != null and !#lists.isEmpty(fieldErrors)}" class="mb-0">
+            <li th:each="err : ${fieldErrors}" th:text="${err}"></li>
+        </ul>
+    </div>
+
+    <!-- 常見錯誤說明 -->
+    <div class="card mb-3">
+        <div class="card-header fw-bold">常見錯誤原因說明</div>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+                <span class="badge bg-warning text-dark me-2">名稱空白</span>
+                課程名稱或類別名稱為必填，不可為空白
+            </li>
+            <li class="list-group-item">
+                <span class="badge bg-warning text-dark me-2">價格空白</span>
+                課程價格為必填，不可留空
+            </li>
+            <li class="list-group-item">
+                <span class="badge bg-warning text-dark me-2">價格為負數</span>
+                課程價格必須大於或等於 0
+            </li>
+            <li class="list-group-item">
+                <span class="badge bg-danger me-2">名稱重複</span>
+                課程名稱或類別名稱已存在，請使用不同名稱
+            </li>
+            <li class="list-group-item">
+                <span class="badge bg-secondary me-2">找不到資源</span>
+                指定的課程或類別不存在，可能已被刪除
+            </li>
+            <li class="list-group-item">
+                <span class="badge bg-secondary me-2">網址格式錯誤</span>
+                網址中的 ID 必須為數字（例：/course/edit/5）
+            </li>
+        </ul>
+    </div>
+
+    <a th:href="@{/course/list}" class="btn btn-primary me-2">回到課程列表</a>
+    <a th:href="@{/category/list}" class="btn btn-secondary">回到類別列表</a>
+</div>
+</body>
+</html>

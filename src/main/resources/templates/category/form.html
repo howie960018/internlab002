@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>類別表單</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div class="container mt-4">
+    <h2>類別表單</h2>
+
+    <div th:if="${duplicateError}" class="alert alert-danger" th:text="${duplicateError}"></div>
+
+    <form th:action="@{/category/save}" th:object="${category}" method="post">
+        <input type="hidden" th:field="*{id}">
+        <div class="mb-3">
+            <label>類別名稱</label>
+            <input type="text" th:field="*{categoryName}"
+                   th:classappend="${#fields.hasErrors('categoryName')} ? 'is-invalid'"
+                   class="form-control">
+            <div class="invalid-feedback" th:errors="*{categoryName}"></div>
+        </div>
+        <button type="submit" class="btn btn-success">儲存</button>
+        <a th:href="@{/category/list}" class="btn btn-secondary">取消</a>
+    </form>
+</div>
+</body>
+</html>
