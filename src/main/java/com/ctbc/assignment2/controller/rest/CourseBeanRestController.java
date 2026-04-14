@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.UUID;
+
 
 /**
  * 課程 REST 控制器，提供課程相關的 API 介面。
