@@ -14,9 +14,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * 專門負責測試 Service 層 (業務邏輯層) 的測試類別。
+ * 【初學者觀念】：
+ *   這裡我們使用 @SpringBootTest 來載入完整的 Spring Application Context (包含 DB 連線與設定)，
+ *   因為我們想確實測試 Service 連動 Repository 寫入資料庫的整體真實流程。
+ *   和 @DataJpaTest 的差異在於，它不只載入資料庫的設定，連 Service 甚至 Controller 都會載入進來。
+ */
 @SpringBootTest
 public class ServiceTest {
 
+    // 直接請 Spring 注射真實的 Service 實作類別進來 (不是假人 Mock)
     @Autowired
     private CourseBeanService courseService;
 
@@ -24,7 +32,7 @@ public class ServiceTest {
     private CourseCategoryBeanService categoryService;
 
     // ════════════════════════════════════════════════════
-    //   基本 CRUD
+    //   基本 CRUD 測試 (建立、讀取、更新、刪除)
     // ════════════════════════════════════════════════════
 
     @Test
@@ -33,8 +41,9 @@ public class ServiceTest {
         cat.setCategoryName("Service測試類別");
         CourseCategoryBean saved = categoryService.save(cat);
 
+        // 呼叫 Service 的 findById 把剛剛存進去的資料撈出來
         CourseCategoryBean found = categoryService.findById(saved.getId());
-        assertThat(found.getCategoryName()).isEqualTo("Service測試類別");
+        assertThat(found.getCategoryName()).isEqualTo("Service測試類別"); // 確認拿出來的內容是不是我們期望的
         System.out.println("✅ testSaveAndFindCategory 通過");
     }
 
@@ -68,6 +77,7 @@ public class ServiceTest {
         course2.setPrice(200.0);
         courseService.save(course2);
 
+        // 至少會查到我們剛剛塞的這 2 筆
         assertThat(courseService.findAll().size()).isGreaterThanOrEqualTo(2);
         System.out.println("✅ testFindAllCourses 通過");
     }
@@ -82,6 +92,7 @@ public class ServiceTest {
 
         courseService.deleteById(savedId);
 
+        // 斷言驗證(assertThrows)：當我們去查一個已經被刪掉的 ID 時，Service 必須要拋出 ResourceNotFoundException！否則測試無法通過。
         assertThrows(ResourceNotFoundException.class, () -> courseService.findById(savedId));
         System.out.println("✅ testDeleteCourse 通過");
     }
@@ -94,6 +105,7 @@ public class ServiceTest {
 
     @Test
     public void testDeleteNonExistentCourse() {
+        // 刪除一個不存在的 ID 不應該使得系統當機崩潰，所以要使用 assertDoesNotThrow 保證無事發生
         assertDoesNotThrow(() -> courseService.deleteById(99999L));
         System.out.println("✅ testDeleteNonExistentCourse 通過");
     }
@@ -112,6 +124,7 @@ public class ServiceTest {
         CourseBean saved = courseService.save(course);
         Long savedId = saved.getId();
 
+        // 把撈出來的物件修改內容後再存進去一次 (Spring Data JPA 會自動判斷這是 Update)
         saved.setCourseName("修改後名稱");
         saved.setPrice(999.0);
         courseService.save(saved);
@@ -139,7 +152,7 @@ public class ServiceTest {
     }
 
     // ════════════════════════════════════════════════════
-    //   重複名稱檢查（Service 層）
+    //   重複名稱檢查（Service 層防呆機制測試）
     // ════════════════════════════════════════════════════
 
     @Test
@@ -150,8 +163,10 @@ public class ServiceTest {
         courseService.save(c1);
 
         CourseBean c2 = new CourseBean();
+        // 設定和上面一模一樣的名稱
         c2.setCourseName("重複課程_Dup");
         c2.setPrice(200.0);
+        // 當儲存第二筆時，Service 應該要幫我們擋下來拋出我們自訂的例外
         assertThrows(DuplicateCourseNameException.class, () -> courseService.save(c2));
         System.out.println("✅ testDuplicateCourseNameThrows 通過");
     }
@@ -175,6 +190,7 @@ public class ServiceTest {
         c.setPrice(100.0);
         CourseBean saved = courseService.save(c);
 
+        // 如果我只是更新價錢，並沒有亂改名稱，這種「跟自己同名」不應該被當作重複名稱擋下來！
         saved.setPrice(300.0);
         assertDoesNotThrow(() -> courseService.save(saved));
         System.out.println("✅ testUpdateCourseWithSameName_NoException 通過");

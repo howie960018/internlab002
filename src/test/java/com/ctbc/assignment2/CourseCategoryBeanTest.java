@@ -11,6 +11,10 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * 課程分類模組的專屬測試類別
+ * @DataJpaTest 保障我們開的是單純用來測試的記憶體資料庫環境
+ */
 @DataJpaTest
 public class CourseCategoryBeanTest {
 
@@ -23,21 +27,28 @@ public class CourseCategoryBeanTest {
     @Autowired
     private CourseCategoryBeanRepository categoryRepo;
 
+    /**
+     * 測試：是否能單純儲存一個分類
+     */
     @Test
     public void testSaveCategory() {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("Java");
         categoryRepo.save(cat);
 
-        // 【修正】flush + clear 確保查詢來自資料庫，而非一級快取
+        // em.flush() 讓 Hibernate 真正寫進資料庫，em.clear() 讓下次查詢不走記憶體捷徑，確保是最真實的狀況。
         em.flush();
         em.clear();
 
+        // 斷言驗證數量與名稱正不正確
         assertThat(categoryRepo.findAll()).hasSize(1);
         assertThat(categoryRepo.findAll().get(0).getCategoryName()).isEqualTo("Java");
         System.out.println("✅ testSaveCategory 通過");
     }
 
+    /**
+     * 測試：把一門課程歸類到某個分類之中，去查資料庫看看這課程到底有沒有成功帶著這個分類回來。
+     */
     @Test
     public void testAddCourseToCategory() {
         CourseCategoryBean cat = new CourseCategoryBean();
@@ -53,11 +64,15 @@ public class CourseCategoryBeanTest {
         em.flush();
         em.clear();
 
+        // 從資料庫找回這門課程，取出分類名稱比對看是不是 "Web"
         CourseBean found = courseRepo.findById(course.getId()).get();
         assertThat(found.getCategory().getCategoryName()).isEqualTo("Web");
         System.out.println("✅ testAddCourseToCategory 通過");
     }
 
+    /**
+     * 測試：原本課程隸屬於 A 分類，現在我們幫它換到 B 分類，能支援嗎？
+     */
     @Test
     public void testMoveCourseToAnotherCategory() {
         CourseCategoryBean cat1 = new CourseCategoryBean();
@@ -71,7 +86,7 @@ public class CourseCategoryBeanTest {
         CourseBean course = new CourseBean();
         course.setCourseName("測試課程");
         course.setPrice(500.0);
-        course.setCategory(cat1);
+        course.setCategory(cat1); // 原本在類別1
         courseRepo.save(course);
 
         em.flush();
@@ -79,20 +94,25 @@ public class CourseCategoryBeanTest {
 
         CourseBean found = courseRepo.findById(course.getId()).get();
         CourseCategoryBean newCat = categoryRepo.findById(cat2.getId()).get();
+        
+        // 替換分類並儲存！！！
         found.setCategory(newCat);
         courseRepo.save(found);
 
         em.flush();
         em.clear();
 
+        // 撈出來看斷言是否在 "類別2" 身上了
         CourseBean updated = courseRepo.findById(course.getId()).get();
         assertThat(updated.getCategory().getCategoryName()).isEqualTo("類別2");
         System.out.println("✅ testMoveCourseToAnotherCategory 通過");
     }
 
+    /**
+     * 測試：是否可以把課程從分類裡面拿掉 (變成孤兒，也就是無門無派，分類為 null 的裸奔課程)。
+     */
     @Test
     public void testRemoveCategoryFromCourse_setNull() {
-        // 【新增】將已有類別的課程設為 null
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("可移除類別");
         categoryRepo.save(cat);
@@ -107,17 +127,23 @@ public class CourseCategoryBeanTest {
         em.clear();
 
         CourseBean found = courseRepo.findById(course.getId()).get();
+        // 刻意將他的分類拔掉，設為 Null
         found.setCategory(null);
         courseRepo.save(found);
 
         em.flush();
         em.clear();
 
+        // 確實驗證課程自己變成 Null 分類
         assertThat(courseRepo.findById(course.getId()).get().getCategory()).isNull();
-        // 類別本身仍存在
+        // 重點：但類別本身還是要活得好好的 (不能因為從課程拿掉，連帶類別也被砍)，所以要檢查類別還存在著。
         assertThat(categoryRepo.findById(cat.getId())).isPresent();
         System.out.println("✅ testRemoveCategoryFromCourse_setNull 通過");
     }
+
+    // ════════════════════════════════════════════════════
+    // 剩下的一樣是 Repository 對於 "分類不存在" , "排除自己本身不重複" 的邏輯檢查，同 CourseBeanTest 中的註解精神！
+    // ════════════════════════════════════════════════════
 
     @Test
     public void testCategory_existsByCategoryName_true() {

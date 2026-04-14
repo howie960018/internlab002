@@ -9,6 +9,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+/**
+ * 啟動前置程式 4：負責測試實體驗證「串聯刪除 (Cascade Delete)」功能。
+ * 由於在 CourseCategoryBean 實體類有設定了 cascade = CascadeType.ALL 與 orphanRemoval = true
+ * 因此當我們刪除了分類後，底下掛著的子課程將如預期中一併被牽連著自動刪除掉。
+ */
 @Component
 @Order(4)
 public class SampleDataRunner4 implements CommandLineRunner {
@@ -38,11 +43,14 @@ public class SampleDataRunner4 implements CommandLineRunner {
         course2.setCategory(cat);
         courseRepo.save(course2);
 
+        // 利用 Repo 計數目前的課程總數量
         long beforeCount = courseRepo.count();
         System.out.println("刪除前課程總數：" + beforeCount);
 
+        // 動作進行：直接將母分類給刪除
         categoryRepo.deleteById(cat.getId());
 
+        // 預期底下原本掛著的 課程X 與 課程Y 都會隨之陪葬消滅
         long afterCount = courseRepo.count();
         System.out.println("✅ cascade：刪除類別後課程總數：" + afterCount);
     }

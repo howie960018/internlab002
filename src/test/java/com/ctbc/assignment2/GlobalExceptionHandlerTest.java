@@ -24,16 +24,26 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * 專門負責測試我們的【全域 API 錯誤處理器 (GlobalExceptionHandler)】是否有發揮作用。
+ * 【初學者觀念】：
+ *   @WebMvcTest : 這個註解不會啟動一整個 Spring 環境，而只會把 Controller 準備好，
+ *                 非常適合「只測網頁或 API 介面通訊」的純輕量級測試。
+ *   @MockBean   : 我們不想真的連接資料庫做複雜存取，所以用 Mock 假人代替 Service，
+ *                 好讓我們可以隨心所欲控制它「無論呼叫什麼都丟出 NotFoundException」，以觸發例外。
+ */
 @WebMvcTest(controllers = {
         CourseBeanRestController.class,
         CategoryBeanRestController.class
 })
-@Import(GlobalExceptionHandler.class)
+@Import(GlobalExceptionHandler.class) // 把我們要測試的「主角」主動引進來
 public class GlobalExceptionHandlerTest {
 
+    // MockMvc 是用來模擬發送 Http Request (GET, POST等) 的好用機器人
     @Autowired
     private MockMvc mockMvc;
 
+    // 將我們的 Service 換成 Mock 物件，讓我們後續能使用 when().thenThrow()
     @MockBean
     private CourseBeanService courseService;
 
@@ -44,22 +54,28 @@ public class GlobalExceptionHandlerTest {
     //   404 ResourceNotFoundException
     // ════════════════════════════════════════════════════
 
+    /**
+     * 測試：當打 API 卻找不到課程時，是否能正確拿到 404 Http Status 與我們客製的錯誤 JSON？
+     */
     @Test
     public void test404_查詢不存在的課程() throws Exception {
+        // 設定假人(Mock)劇本：只要你呼叫找 ID=99999 的，我就絕對丟出 Exception 嚇你
         when(courseService.findById(99999L))
                 .thenThrow(new ResourceNotFoundException("Course not found: 99999"));
 
+        // 模擬使用 Postman 發送 GET 去 /api/course/99999
         mockMvc.perform(get("/api/course/99999"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Course not found: 99999"))
-                .andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.details").exists());
+                .andExpect(status().isNotFound()) // 預期它會給 404 (因為 GlobalExceptionHandler 寫了 @ResponseStatus(HttpStatus.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value("Course not found: 99999")) // 用 jsonPath 檢查回傳的 JSON 裡面的 message 內容
+                .andExpect(jsonPath("$.timestamp").exists()) // 預期要有我們自定義回傳的好看 timestamp
+                .andExpect(jsonPath("$.details").exists()); // 預期要有請求路徑 details
 
         System.out.println("✅ test404_查詢不存在的課程 通過");
     }
 
     @Test
     public void test404_刪除不存在的課程() throws Exception {
+        // 當 deleteById 方法不回傳東西(void)時，Mockito 設定假人的寫法是 doThrow().when()
         org.mockito.Mockito.doThrow(new ResourceNotFoundException("Course not found: 99999"))
                 .when(courseService).deleteById(99999L);
 
@@ -101,13 +117,14 @@ public class GlobalExceptionHandlerTest {
 
     @Test
     public void test409_新增重複課程名稱() throws Exception {
+        // 假動作：只要一呼叫 save 就拋重複名稱錯誤
         when(courseService.save(any()))
                 .thenThrow(new DuplicateCourseNameException("課程名稱已存在：Java 基礎"));
 
         mockMvc.perform(post("/api/course")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"courseName\":\"Java 基礎\",\"price\":3000.0}"))
-                .andExpect(status().isConflict())
+                        .content("{\"courseName\":\"Java 基礎\",\"price\":3000.0}")) // 塞假 payload
+                .andExpect(status().isConflict()) // isConflict 就是 409
                 .andExpect(jsonPath("$.message").value("課程名稱已存在：Java 基礎"))
                 .andExpect(jsonPath("$.timestamp").exists());
 
@@ -164,11 +181,15 @@ public class GlobalExceptionHandlerTest {
     //   400 MethodArgumentTypeMismatchException
     // ════════════════════════════════════════════════════
 
+    /**
+     * 測試：當 Controller 的參數要求是 Long (數字 ID)，但某個呆瓜傳了英文字母 "abc" 怎麼辦？
+     * 我們的 GlobalExceptionHandler 必須攔截到 TypeMismatchException 把狀態轉成 400 Bad Request 回應回去。
+     */
     @Test
     public void test400_PathVariable型態不符_文字傳入數字欄位() throws Exception {
         mockMvc.perform(get("/api/course/abc"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
+                .andExpect(status().isBadRequest()) // 就是 HTTP 狀態碼 400
+                .andExpect(jsonPath("$.message").exists()) // 至少確保有噴一個字串給前端說明原因
                 .andExpect(jsonPath("$.timestamp").exists());
 
         System.out.println("✅ test400_PathVariable型態不符_文字傳入數字欄位 通過");

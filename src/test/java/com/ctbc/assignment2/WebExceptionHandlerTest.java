@@ -25,6 +25,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * 專門負責測試我們的【前端畫面 (Thymeleaf) 錯誤處理器 (WebExceptionHandler)】是否有發揮作用。
+ * 和 API 錯誤處理不同：網頁發生錯誤時，我們不是要把 JSON 回傳給使用者，
+ * 而是要「導向一個美美的錯誤頁面 (error.html)」，把錯誤訊息放在畫面裡給使用者看。
+ * 
+ * 所以你可以看到這裡的 Assert 都是寫 .andExpect(view().name("error")) 或是 .andExpect(model().XXX)
+ */
 @WebMvcTest(controllers = {
         CourseWebController.class,
         CategoryWebController.class,
@@ -43,18 +50,20 @@ public class WebExceptionHandlerTest {
     private CourseCategoryBeanService categoryService;
 
     // ════════════════════════════════════════════════════
-    //   ResourceNotFoundException → error view
+    //   ResourceNotFoundException → 導向 error 頁面
     // ════════════════════════════════════════════════════
 
     @Test
     public void testWeb404_課程不存在_導到error頁() throws Exception {
+        // 設定假人
         when(courseService.findById(99999L))
                 .thenThrow(new ResourceNotFoundException("Course not found: 99999"));
 
+        // 去敲擊網頁修改畫面
         mockMvc.perform(get("/course/edit/99999"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("error"))
-                .andExpect(model().attribute("errorMessage", "Course not found: 99999"));
+                .andExpect(view().name("error")) // 預期它會把我們導去 error.html
+                .andExpect(model().attribute("errorMessage", "Course not found: 99999")); // 預期會把錯誤文字帶到畫面的 errorMessage 中
 
         System.out.println("✅ testWeb404_課程不存在_導到error頁 通過");
     }
@@ -101,11 +110,10 @@ public class WebExceptionHandlerTest {
     // ════════════════════════════════════════════════════
     //   DuplicateCourseNameException → 留在表單頁顯示 duplicateError
     //
-    //   【重要說明】
-    //   CourseWebController 和 CategoryWebController 的 save() 方法
-    //   自己 catch DuplicateCourseNameException，回到表單頁顯示錯誤訊息，
-    //   「不會」拋給 WebExceptionHandler 處理。
-    //   因此正確的測試預期：view = "course/form"，model 有 "duplicateError"。
+    //   【初學者常見問題 - 重要說明】
+    //   為甚麼重複名稱的時候不是跳轉去 error.html？
+    //   因為這是我們寫前端畫面的重要體驗：如果使用者輸入名稱錯誤，直接跳到別的畫面會很錯愕，
+    //   所以通常「輸入表單時的情境」，Controller 會自己把 Exception 攔截，然後再次回傳原來的 form.html！
     // ════════════════════════════════════════════════════
 
     @Test
@@ -118,9 +126,9 @@ public class WebExceptionHandlerTest {
                         .param("courseName", "Java 基礎")
                         .param("price", "3000.0"))
                 .andExpect(status().isOk())
-                // 【修正】Controller catch 後 return "course/form"，不走 WebExceptionHandler
+                // 【測試重點】Controller catch 後 return "course/form"，不經過 WebExceptionHandler 的導向
                 .andExpect(view().name("course/form"))
-                .andExpect(model().attributeExists("duplicateError"));
+                .andExpect(model().attributeExists("duplicateError")); // 會往前端送出錯誤提示文字
 
         System.out.println("✅ testWeb409_新增重複課程名稱_留在表單頁顯示錯誤 通過");
     }
@@ -133,7 +141,7 @@ public class WebExceptionHandlerTest {
         mockMvc.perform(post("/category/save")
                         .param("categoryName", "Java"))
                 .andExpect(status().isOk())
-                // 【修正】Controller catch 後 return "category/form"，不走 WebExceptionHandler
+                // 【測試重點】回到原表單
                 .andExpect(view().name("category/form"))
                 .andExpect(model().attributeExists("duplicateError"));
 
@@ -141,8 +149,8 @@ public class WebExceptionHandlerTest {
     }
 
     // ════════════════════════════════════════════════════
-    //   DataIntegrityViolationException → error view
-    //   （Controller 沒有 catch DataIntegrityViolationException，會傳到 WebExceptionHandler）
+    //   DataIntegrityViolationException → 導向 error 頁面
+    //   (當底層拋出意外的完整性錯誤時)
     // ════════════════════════════════════════════════════
 
     @Test
@@ -176,11 +184,12 @@ public class WebExceptionHandlerTest {
     }
 
     // ════════════════════════════════════════════════════
-    //   MethodArgumentTypeMismatchException → error view
+    //   MethodArgumentTypeMismatchException → 導向 error 頁面
     // ════════════════════════════════════════════════════
 
     @Test
     public void testWeb400_PathVariable型態不符_導到error頁() throws Exception {
+        // ID 應該是數字，但我偏偏送出文字 abc
         mockMvc.perform(get("/course/edit/abc"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
