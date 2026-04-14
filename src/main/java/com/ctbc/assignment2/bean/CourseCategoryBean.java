@@ -17,8 +17,15 @@ public class CourseCategoryBean {
     private String categoryName;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "category", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH})
     private List<CourseBean> courses;
+
+    @PreRemove
+    private void preRemove() {
+        if (courses != null) {
+            courses.forEach(course -> course.setCategory(null));
+        }
+    }
 
     // Getter / Setter
     public Long getId() { return id; }

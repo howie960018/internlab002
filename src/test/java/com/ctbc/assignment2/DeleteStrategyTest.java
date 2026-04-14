@@ -101,7 +101,7 @@ public class DeleteStrategyTest {
     }
 
     // ════════════════════════════════════════════════════
-    //   Strategy 2：CASCADE ALL + orphanRemoval（直接刪類別帶走課程）
+    //   Strategy 2：PreRemove set null (自動把類別設為 null，不連帶刪除課程)
     // ════════════════════════════════════════════════════
 
     @Test
@@ -128,7 +128,6 @@ public class DeleteStrategyTest {
         long beforeCount = courseRepo.count();
         System.out.println("刪除前課程總數：" + beforeCount);
 
-        // 【修正】透過 em 重新載入 managed entity，才能觸發 CascadeType.ALL 連帶刪除
         CourseCategoryBean catToDelete = em.find(CourseCategoryBean.class, cat.getId());
         categoryRepo.delete(catToDelete);
         em.flush();
@@ -137,10 +136,13 @@ public class DeleteStrategyTest {
         long afterCount = courseRepo.count();
         System.out.println("刪除後課程總數：" + afterCount);
 
-        assertThat(afterCount).isEqualTo(beforeCount - 2);
-        assertThat(courseRepo.findById(course1.getId())).isEmpty();
-        assertThat(courseRepo.findById(course2.getId())).isEmpty();
-        System.out.println("✅ testDeleteCategory_Cascade 通過");
+        // 課程不應被刪除
+        assertThat(afterCount).isEqualTo(beforeCount);
+        
+        // 但類別應該變成 null
+        assertThat(courseRepo.findById(course1.getId()).get().getCategory()).isNull();
+        assertThat(courseRepo.findById(course2.getId()).get().getCategory()).isNull();
+        System.out.println("✅ testDeleteCategory_Cascade (現已改為自動 set null) 通過");
     }
 
     @Test
@@ -165,9 +167,10 @@ public class DeleteStrategyTest {
 
         // 類別本身也應消失
         assertThat(categoryRepo.findById(cat.getId())).isEmpty();
-        // 關聯課程也應消失
-        assertThat(courseRepo.findById(c.getId())).isEmpty();
-        System.out.println("✅ testDeleteCategory_Cascade_類別也消失 通過");
+        // 關聯課程不消失，但類別變 null
+        assertThat(courseRepo.findById(c.getId())).isPresent();
+        assertThat(courseRepo.findById(c.getId()).get().getCategory()).isNull();
+        System.out.println("✅ testDeleteCategory_Cascade_類別也消失 (現已改為自動 set null) 通過");
     }
 
     @Test
