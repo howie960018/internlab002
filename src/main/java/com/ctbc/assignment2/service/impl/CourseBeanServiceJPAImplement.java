@@ -6,9 +6,17 @@ import com.ctbc.assignment2.exception.ResourceNotFoundException;
 import com.ctbc.assignment2.repository.CourseBeanRepository;
 import com.ctbc.assignment2.service.CourseBeanService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Service 實作層 (Implementation)
@@ -57,15 +65,14 @@ public class CourseBeanServiceJPAImplement implements CourseBeanService {
     @Transactional
     @Override
     public CourseBean save(CourseBean course) {
-        if (course.getId() != null) {
-            // 更新：排除自身檢查是否重複
-            if (repo.existsByCourseNameAndIdNot(course.getCourseName(), course.getId())) {
-                throw new DuplicateCourseNameException("課程名稱已存在：" + course.getCourseName());
-            }
-        } else {
-            // 新增：檢查是否已存在同名
-            if (repo.existsByCourseName(course.getCourseName())) {
-                throw new DuplicateCourseNameException("課程名稱已存在：" + course.getCourseName());
+        String normalizedName = normalizeName(course.getCourseName());
+        if (normalizedName != null) {
+            for (CourseBean existing : repo.findAll()) {
+                if (existing.getId() != null
+                        && !existing.getId().equals(course.getId())
+                        && normalizedName.equals(normalizeName(existing.getCourseName()))) {
+                    throw new DuplicateCourseNameException("課程名稱已存在：" + course.getCourseName());
+                }
             }
         }
         return repo.save(course);
@@ -74,6 +81,76 @@ public class CourseBeanServiceJPAImplement implements CourseBeanService {
     @Transactional
     @Override
     public void deleteById(Long id) {
+        if (!repo.existsById(id)) {
+            throw new ResourceNotFoundException("Course not found: " + id);
+        }
         repo.deleteById(id);
+    }
+
+    @Override
+    public Page<CourseBean> findPage(Pageable pageable) {
+        return repo.findAll(pageable);
+    }
+
+    @Transactional
+    @Override
+    public void deleteBatch(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+        repo.deleteAllById(ids);
+    }
+
+    @Transactional
+    @Override
+    public List<CourseBean> saveBatch(List<CourseBean> courses) {
+        if (courses == null || courses.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, Long> existingByNormalized = new HashMap<>();
+        for (CourseBean existing : repo.findAll()) {
+            String normalized = normalizeName(existing.getCourseName());
+            if (normalized != null) {
+                existingByNormalized.putIfAbsent(normalized, existing.getId());
+            }
+        }
+
+        Set<String> seen = new HashSet<>();
+        for (CourseBean course : courses) {
+            String normalized = normalizeName(course.getCourseName());
+            if (normalized == null) {
+                continue;
+            }
+            if (!seen.add(normalized)) {
+                throw new DuplicateCourseNameException("課程名稱已存在：" + course.getCourseName());
+            }
+            Long existingId = existingByNormalized.get(normalized);
+            if (existingId != null && (course.getId() == null || !existingId.equals(course.getId()))) {
+                throw new DuplicateCourseNameException("課程名稱已存在：" + course.getCourseName());
+            }
+        }
+
+        return repo.saveAll(courses);
+    }
+
+    @Override
+    public List<CourseBean> findByCategoryId(Long categoryId) {
+        return repo.findByCategoryId(categoryId);
+    }
+
+    @Override
+    public Page<CourseBean> findPageByCategoryIds(List<Long> categoryIds, Pageable pageable) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return repo.findByCategoryIdIn(categoryIds, pageable);
+    }
+
+    private String normalizeName(String name) {
+        if (name == null) {
+            return null;
+        }
+        return name.replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
     }
 }

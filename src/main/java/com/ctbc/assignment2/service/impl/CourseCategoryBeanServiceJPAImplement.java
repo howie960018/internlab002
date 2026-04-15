@@ -1,8 +1,11 @@
 package com.ctbc.assignment2.service.impl;
 
 import com.ctbc.assignment2.bean.CourseCategoryBean;
+import com.ctbc.assignment2.exception.CategoryHierarchyException;
+import com.ctbc.assignment2.exception.CategoryNotEmptyException;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
 import com.ctbc.assignment2.exception.ResourceNotFoundException;
+import com.ctbc.assignment2.repository.CourseBeanRepository;
 import com.ctbc.assignment2.repository.CourseCategoryBeanRepository;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +29,9 @@ public class CourseCategoryBeanServiceJPAImplement implements CourseCategoryBean
     @Autowired
     private CourseCategoryBeanRepository repo;
 
+    @Autowired
+    private CourseBeanRepository courseRepo;
+
     @Override
     public List<CourseCategoryBean> findAll() {
         return repo.findAll();
@@ -37,6 +43,16 @@ public class CourseCategoryBeanServiceJPAImplement implements CourseCategoryBean
                    .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + id));
     }
 
+    @Override
+    public List<CourseCategoryBean> findTopLevel() {
+        return repo.findByParentIsNullOrderByCategoryName();
+    }
+
+    @Override
+    public List<CourseCategoryBean> findChildren(Long parentId) {
+        return repo.findByParentIdOrderByCategoryName(parentId);
+    }
+
     /**
      * 進行類別的修改/新增。
      * - @Transactional: 保障資料庫讀寫的事務完整性 (Transaction)。
@@ -45,6 +61,19 @@ public class CourseCategoryBeanServiceJPAImplement implements CourseCategoryBean
     @Transactional
     @Override
     public CourseCategoryBean save(CourseCategoryBean category) {
+        CourseCategoryBean parent = null;
+        if (category.getParent() != null && category.getParent().getId() != null) {
+            Long parentId = category.getParent().getId();
+            if (category.getId() != null && parentId.equals(category.getId())) {
+                throw new CategoryHierarchyException("父類別不可為自己");
+            }
+                    parent = repo.findById(parentId)
+                        .orElseThrow(() -> new ResourceNotFoundException("父類別不存在: " + parentId));
+            if (parent.getParent() != null) {
+                throw new CategoryHierarchyException("父類別必須是主類別");
+            }
+        }
+
         if (category.getId() != null) {
             // 更新：載入既有實體保留 courses 集合，排除自身檢查重複名稱
             CourseCategoryBean existing = repo.findById(category.getId())
@@ -52,19 +81,33 @@ public class CourseCategoryBeanServiceJPAImplement implements CourseCategoryBean
             if (repo.existsByCategoryNameAndIdNot(category.getCategoryName(), category.getId())) {
                 throw new DuplicateCourseNameException("類別名稱已存在：" + category.getCategoryName());
             }
+            if (parent != null && repo.existsByParentId(existing.getId())) {
+                throw new CategoryHierarchyException("已有子類別的主類別不可改為子類別");
+            }
             existing.setCategoryName(category.getCategoryName());
+            existing.setParent(parent);
             return repo.save(existing);
         }
         // 新增：檢查是否已存在同名
         if (repo.existsByCategoryName(category.getCategoryName())) {
             throw new DuplicateCourseNameException("類別名稱已存在：" + category.getCategoryName());
         }
+        category.setParent(parent);
         return repo.save(category);
     }
 
     @Transactional
     @Override
     public void deleteById(Long id) {
+        if (!repo.existsById(id)) {
+            throw new ResourceNotFoundException("Category not found: " + id);
+        }
+        if (repo.existsByParentId(id)) {
+            throw new CategoryNotEmptyException("此類別底下仍有子類別，請先移除或轉移");
+        }
+        if (courseRepo.existsByCategoryId(id)) {
+            throw new CategoryNotEmptyException("此類別底下仍有課程，請先移除或轉移");
+        }
         repo.deleteById(id);
     }
 }

@@ -123,7 +123,7 @@ public class CourseCategoryBeanTest {
     }
 
     @Test
-    public void testCategory_existsByCategoryName_true() {
+    public void testCategoryExistsByCategoryNameTrue() {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("存在類別名稱");
         categoryRepo.save(cat);
@@ -134,13 +134,13 @@ public class CourseCategoryBeanTest {
     }
 
     @Test
-    public void testCategory_existsByCategoryName_false() {
+    public void testCategoryExistsByCategoryNameFalse() {
         assertThat(categoryRepo.existsByCategoryName("完全不存在XYZ")).isFalse();
         System.out.println("✅ testCategory_existsByCategoryName_false 通過");
     }
 
     @Test
-    public void testCategory_existsByCategoryNameAndIdNot_排除自身回false() {
+    public void testCategoryExistsByCategoryNameAndIdNotExcludeSelfFalse() {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("唯一類別名");
         categoryRepo.save(cat);
@@ -151,7 +151,7 @@ public class CourseCategoryBeanTest {
     }
 
     @Test
-    public void testCategory_existsByCategoryNameAndIdNot_排除他人回true() {
+    public void testCategoryExistsByCategoryNameAndIdNotExcludeOtherTrue() {
         CourseCategoryBean cat1 = new CourseCategoryBean();
         cat1.setCategoryName("重複類別名");
         categoryRepo.save(cat1);

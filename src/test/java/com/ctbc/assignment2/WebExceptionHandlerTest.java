@@ -50,7 +50,7 @@ public class WebExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testWeb404_課程不存在_導到error頁() throws Exception {
+        public void testWeb404CourseNotFoundToErrorView() throws Exception {
         when(courseService.findById(99999L))
                 .thenThrow(new ResourceNotFoundException("Course not found: 99999"));
 
@@ -63,7 +63,7 @@ public class WebExceptionHandlerTest {
     }
 
     @Test
-    public void testWeb404_類別不存在_導到error頁() throws Exception {
+        public void testWeb404CategoryNotFoundToErrorView() throws Exception {
         when(categoryService.findById(99999L))
                 .thenThrow(new ResourceNotFoundException("Category not found: 99999"));
 
@@ -76,7 +76,7 @@ public class WebExceptionHandlerTest {
     }
 
     @Test
-    public void testWeb404_刪除不存在的課程_導到error頁() throws Exception {
+        public void testWeb404DeleteMissingCourseToErrorView() throws Exception {
         doThrow(new ResourceNotFoundException("Course not found: 99999"))
                 .when(courseService).deleteById(99999L);
 
@@ -89,7 +89,7 @@ public class WebExceptionHandlerTest {
     }
 
     @Test
-    public void testWeb404_刪除不存在的類別_導到error頁() throws Exception {
+        public void testWeb404DeleteMissingCategoryToErrorView() throws Exception {
         doThrow(new ResourceNotFoundException("Category not found: 99999"))
                 .when(categoryService).deleteById(99999L);
 
@@ -112,7 +112,7 @@ public class WebExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testWeb409_新增重複課程名稱_留在表單頁顯示錯誤() throws Exception {
+        public void testWeb409DuplicateCourseNameStayOnForm() throws Exception {
         when(courseService.save(any()))
                 .thenThrow(new DuplicateCourseNameException("課程名稱已存在：Java 基礎"));
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
@@ -129,7 +129,7 @@ public class WebExceptionHandlerTest {
     }
 
     @Test
-    public void testWeb409_新增重複類別名稱_留在表單頁顯示錯誤() throws Exception {
+        public void testWeb409DuplicateCategoryNameStayOnForm() throws Exception {
         when(categoryService.save(any()))
                 .thenThrow(new DuplicateCourseNameException("類別名稱已存在：Java"));
 
@@ -149,7 +149,7 @@ public class WebExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testWeb409_DB_constraint違反_導到error頁() throws Exception {
+        public void testWeb409DbConstraintViolationToErrorView() throws Exception {
         when(categoryService.save(any()))
                 .thenThrow(new DataIntegrityViolationException("constraint violation"));
 
@@ -163,7 +163,7 @@ public class WebExceptionHandlerTest {
     }
 
     @Test
-    public void testWeb409_課程DB_constraint違反_導到error頁() throws Exception {
+        public void testWeb409CourseDbConstraintViolationToErrorView() throws Exception {
         when(courseService.save(any()))
                 .thenThrow(new DataIntegrityViolationException("constraint violation"));
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
@@ -183,7 +183,7 @@ public class WebExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testWeb400_PathVariable型態不符_導到error頁() throws Exception {
+        public void testWeb400PathVariableTypeMismatchToErrorView() throws Exception {
         mockMvc.perform(get("/course/edit/abc"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
@@ -193,7 +193,7 @@ public class WebExceptionHandlerTest {
     }
 
     @Test
-    public void testWeb400_類別PathVariable型態不符_導到error頁() throws Exception {
+        public void testWeb400CategoryPathVariableTypeMismatchToErrorView() throws Exception {
         mockMvc.perform(get("/category/edit/xyz"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
@@ -203,7 +203,7 @@ public class WebExceptionHandlerTest {
     }
 
     @Test
-    public void testWeb400_刪除時PathVariable型態不符_導到error頁() throws Exception {
+        public void testWeb400DeletePathVariableTypeMismatchToErrorView() throws Exception {
         mockMvc.perform(get("/course/delete/notANumber"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
@@ -217,7 +217,7 @@ public class WebExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testWeb_表單驗証失敗_課程名稱空白_留在表單頁() throws Exception {
+        public void testWebValidationFailCourseNameBlankStayOnForm() throws Exception {
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(post("/course/save")
@@ -230,7 +230,7 @@ public class WebExceptionHandlerTest {
     }
 
     @Test
-    public void testWeb_表單驗証失敗_類別名稱空白_留在表單頁() throws Exception {
+        public void testWebValidationFailCategoryNameBlankStayOnForm() throws Exception {
         mockMvc.perform(post("/category/save")
                         .param("categoryName", ""))
                 .andExpect(status().isOk())
@@ -240,7 +240,7 @@ public class WebExceptionHandlerTest {
     }
 
     @Test
-    public void testWeb_表單驗証失敗_價格為負數_留在表單頁() throws Exception {
+        public void testWebValidationFailNegativePriceStayOnForm() throws Exception {
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(post("/course/save")
@@ -257,8 +257,8 @@ public class WebExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testWeb500_未預期例外_導到error頁() throws Exception {
-        when(courseService.findAll())
+        public void testWeb500UnexpectedErrorToErrorView() throws Exception {
+        when(courseService.findPage(any()))
                 .thenThrow(new RuntimeException("資料庫連線失敗"));
 
         mockMvc.perform(get("/course/list"))
@@ -270,7 +270,7 @@ public class WebExceptionHandlerTest {
     }
 
     @Test
-    public void testWeb500_類別查詢未預期例外_導到error頁() throws Exception {
+        public void testWeb500CategoryUnexpectedErrorToErrorView() throws Exception {
         when(categoryService.findAll())
                 .thenThrow(new RuntimeException("NullPointerException"));
 
@@ -287,7 +287,7 @@ public class WebExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testHome_正常顯示首頁() throws Exception {
+        public void testHomeLoadsSuccessfully() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("home"));

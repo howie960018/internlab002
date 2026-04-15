@@ -47,6 +47,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
+    // ── 409：類別不可刪除 ───────────────────────────────────────
+    @ExceptionHandler(CategoryNotEmptyException.class)
+    public ResponseEntity<Object> handleCategoryNotEmpty(
+            CategoryNotEmptyException ex, WebRequest request) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
+    // ── 409：類別層級錯誤 ───────────────────────────────────────
+    @ExceptionHandler(CategoryHierarchyException.class)
+    public ResponseEntity<Object> handleCategoryHierarchy(
+            CategoryHierarchyException ex, WebRequest request) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
     // ── 409：DB constraint 違反（兜底） ─────────────────────────
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Object> handleDataIntegrity(

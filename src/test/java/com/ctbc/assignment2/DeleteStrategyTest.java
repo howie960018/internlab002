@@ -29,7 +29,7 @@ public class DeleteStrategyTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testDeleteCategory_SetNull() {
+    public void testDeleteCategorySetNull() {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("待刪除類別");
         categoryRepo.save(cat);
@@ -63,7 +63,7 @@ public class DeleteStrategyTest {
     }
 
     @Test
-    public void testDeleteCategory_SetNull_多筆課程() {
+    public void testDeleteCategorySetNullMultipleCourses() {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("多筆待解除類別");
         categoryRepo.save(cat);
@@ -106,7 +106,7 @@ public class DeleteStrategyTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testDeleteCategory_Cascade() {
+    public void testDeleteCategoryCascade() {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("連帶刪除類別");
         categoryRepo.save(cat);
@@ -129,6 +129,13 @@ public class DeleteStrategyTest {
         long beforeCount = courseRepo.count();
         System.out.println("刪除前課程總數：" + beforeCount);
 
+        // 嚴格刪除策略：手動解除關聯後才能刪除
+        courseRepo.findAll().stream()
+            .filter(c -> c.getCategory() != null && c.getCategory().getId().equals(cat.getId()))
+            .forEach(c -> { c.setCategory(null); courseRepo.save(c); });
+        em.flush();
+        em.clear();
+
         CourseCategoryBean catToDelete = em.find(CourseCategoryBean.class, cat.getId());
         categoryRepo.delete(catToDelete);
         em.flush();
@@ -143,11 +150,11 @@ public class DeleteStrategyTest {
         // 但類別應該變成 null
         assertThat(courseRepo.findById(course1.getId()).get().getCategory()).isNull();
         assertThat(courseRepo.findById(course2.getId()).get().getCategory()).isNull();
-        System.out.println("✅ testDeleteCategory_Cascade (現已改為自動 set null) 通過");
+        System.out.println("✅ testDeleteCategory_Cascade (手動解除關聯後刪除) 通過");
     }
 
     @Test
-    public void testDeleteCategory_Cascade_類別也消失() {
+    public void testDeleteCategoryCascadeCategoryRemoved() {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("連帶刪除類別2");
         categoryRepo.save(cat);
@@ -161,6 +168,13 @@ public class DeleteStrategyTest {
         em.flush();
         em.clear();
 
+        // 嚴格刪除策略：手動解除關聯後才能刪除
+        CourseBean found = courseRepo.findById(c.getId()).get();
+        found.setCategory(null);
+        courseRepo.save(found);
+        em.flush();
+        em.clear();
+
         CourseCategoryBean catToDelete = em.find(CourseCategoryBean.class, cat.getId());
         categoryRepo.delete(catToDelete);
         em.flush();
@@ -171,11 +185,11 @@ public class DeleteStrategyTest {
         // 關聯課程不消失，但類別變 null
         assertThat(courseRepo.findById(c.getId())).isPresent();
         assertThat(courseRepo.findById(c.getId()).get().getCategory()).isNull();
-        System.out.println("✅ testDeleteCategory_Cascade_類別也消失 (現已改為自動 set null) 通過");
+        System.out.println("✅ testDeleteCategory_Cascade_類別也消失 (手動解除關聯後刪除) 通過");
     }
 
     @Test
-    public void testDeleteCourse_不影響類別() {
+    public void testDeleteCourseDoesNotAffectCategory() {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("不受影響類別");
         categoryRepo.save(cat);

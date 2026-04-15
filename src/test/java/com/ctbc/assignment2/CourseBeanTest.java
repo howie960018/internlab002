@@ -53,7 +53,7 @@ public class CourseBeanTest {
     }
 
     @Test
-    public void testSaveCourse_無類別() {
+    public void testSaveCourseWithoutCategory() {
         CourseBean course = new CourseBean();
         course.setCourseName("無類別課程");
         course.setPrice(500.0);
@@ -103,7 +103,7 @@ public class CourseBeanTest {
     }
 
     @Test
-    public void testCreatedAt_不可為null() {
+    public void testCreatedAtNotNull() {
         CourseBean course = new CourseBean();
         course.setCourseName("建立時間測試");
         course.setPrice(100.0);
@@ -118,7 +118,7 @@ public class CourseBeanTest {
     }
 
     @Test
-    public void testCreatedAt_儲存後不再變動() throws InterruptedException {
+    public void testCreatedAtNotUpdatedAfterSave() throws InterruptedException {
         // 【新增】@Column(updatable = false) 保證 createdAt 不會被 update
         CourseBean course = new CourseBean();
         course.setCourseName("createdAt不變測試");
@@ -148,7 +148,7 @@ public class CourseBeanTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testExistsByCourseName_存在回true() {
+    public void testExistsByCourseNameReturnsTrue() {
         CourseBean course = new CourseBean();
         course.setCourseName("存在課程");
         course.setPrice(100.0);
@@ -160,13 +160,13 @@ public class CourseBeanTest {
     }
 
     @Test
-    public void testExistsByCourseName_不存在回false() {
+    public void testExistsByCourseNameReturnsFalse() {
         assertThat(courseRepo.existsByCourseName("完全不存在的課程名稱XYZ")).isFalse();
         System.out.println("✅ testExistsByCourseName_不存在回false 通過");
     }
 
     @Test
-    public void testExistsByCourseNameAndIdNot_排除自身回false() {
+    public void testExistsByCourseNameAndIdNotExcludeSelfFalse() {
         CourseBean c = new CourseBean();
         c.setCourseName("唯一課程名");
         c.setPrice(100.0);
@@ -179,7 +179,7 @@ public class CourseBeanTest {
     }
 
     @Test
-    public void testExistsByCourseNameAndIdNot_排除他人回true() {
+    public void testExistsByCourseNameAndIdNotExcludeOtherTrue() {
         CourseBean c1 = new CourseBean();
         c1.setCourseName("重複課程名");
         c1.setPrice(100.0);
@@ -197,7 +197,7 @@ public class CourseBeanTest {
     }
 
     @Test
-    public void testDeleteCourse_從資料庫消失() {
+    public void testDeleteCourseRemovedFromDatabase() {
         CourseBean course = new CourseBean();
         course.setCourseName("待刪除課程");
         course.setPrice(300.0);

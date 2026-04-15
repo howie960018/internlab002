@@ -48,7 +48,7 @@ public class GlobalExceptionHandlerTest {
 
     // @Test: Test 標記
     @Test
-    public void test404_查詢不存在的課程() throws Exception {
+        public void test404GetMissingCourse() throws Exception {
         // when(...).thenThrow(...): Mockito 語法。設定「當呼叫 courseService.findById(99999L)」時，強制丟出 ResourceNotFoundException
         when(courseService.findById(99999L))
                 .thenThrow(new ResourceNotFoundException("Course not found: 99999"));
@@ -63,7 +63,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test404_刪除不存在的課程() throws Exception {
+        public void test404DeleteMissingCourse() throws Exception {
         org.mockito.Mockito.doThrow(new ResourceNotFoundException("Course not found: 99999"))
                 .when(courseService).deleteById(99999L);
 
@@ -75,7 +75,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test404_查詢不存在的類別() throws Exception {
+        public void test404GetMissingCategory() throws Exception {
         when(categoryService.findById(99999L))
                 .thenThrow(new ResourceNotFoundException("Category not found: 99999"));
 
@@ -88,7 +88,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test404_刪除不存在的類別() throws Exception {
+        public void test404DeleteMissingCategory() throws Exception {
         org.mockito.Mockito.doThrow(new ResourceNotFoundException("Category not found: 5"))
                 .when(categoryService).deleteById(5L);
 
@@ -104,7 +104,7 @@ public class GlobalExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void test409_新增重複課程名稱() throws Exception {
+        public void test409CreateDuplicateCourseName() throws Exception {
         when(courseService.save(any()))
                 .thenThrow(new DuplicateCourseNameException("課程名稱已存在：Java 基礎"));
 
@@ -119,7 +119,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test409_更新成重複課程名稱() throws Exception {
+        public void test409UpdateToDuplicateCourseName() throws Exception {
         when(courseService.save(any()))
                 .thenThrow(new DuplicateCourseNameException("課程名稱已存在：Spring Boot 入門"));
 
@@ -133,7 +133,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test409_新增重複類別名稱() throws Exception {
+        public void test409CreateDuplicateCategoryName() throws Exception {
         when(categoryService.save(any()))
                 .thenThrow(new DuplicateCourseNameException("類別名稱已存在：程式設計"));
 
@@ -151,7 +151,7 @@ public class GlobalExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void test409_DB_constraint違反() throws Exception {
+        public void test409DbConstraintViolation() throws Exception {
         when(courseService.save(any()))
                 .thenThrow(new DataIntegrityViolationException("constraint violation"));
 
@@ -169,7 +169,7 @@ public class GlobalExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void test400_PathVariable型態不符_文字傳入數字欄位() throws Exception {
+        public void test400PathVariableTypeMismatchTextToNumber() throws Exception {
         mockMvc.perform(get("/api/course/abc"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists())
@@ -179,7 +179,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test400_PathVariable型態不符_刪除時傳入文字() throws Exception {
+        public void test400PathVariableTypeMismatchOnDelete() throws Exception {
         mockMvc.perform(delete("/api/course/xyz"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.timestamp").exists())
@@ -189,7 +189,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test400_類別PathVariable型態不符() throws Exception {
+        public void test400CategoryPathVariableTypeMismatch() throws Exception {
         mockMvc.perform(get("/api/category/abc"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
@@ -202,7 +202,7 @@ public class GlobalExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void test400_RequestBody_courseName空白() throws Exception {
+        public void test400RequestBodyCourseNameBlank() throws Exception {
         mockMvc.perform(post("/api/course")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"courseName\":\"\",\"price\":100.0}"))
@@ -213,7 +213,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test400_RequestBody_price為負數() throws Exception {
+        public void test400RequestBodyPriceNegative() throws Exception {
         mockMvc.perform(post("/api/course")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"courseName\":\"測試課程\",\"price\":-1.0}"))
@@ -228,7 +228,7 @@ public class GlobalExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void test400_JSON格式錯誤_price應為數字() throws Exception {
+        public void test400JsonMalformedPriceNotNumber() throws Exception {
         mockMvc.perform(post("/api/course")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"courseName\":\"測試\",\"price\":\"not-a-number\"}"))
@@ -240,7 +240,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test400_JSON格式完全不合法() throws Exception {
+        public void test400JsonCompletelyInvalid() throws Exception {
         mockMvc.perform(post("/api/course")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("this is not json at all"))
@@ -251,7 +251,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test400_Body為空() throws Exception {
+        public void test400EmptyBody() throws Exception {
         mockMvc.perform(post("/api/course")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(""))
@@ -286,7 +286,7 @@ public class GlobalExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void test405_對course_id_送PUT() throws Exception {
+        public void test405PutToCourseId() throws Exception {
         // /api/course/{id} 只有 GET + DELETE，送 PUT → 405
         mockMvc.perform(put("/api/course/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -298,7 +298,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test405_對category_id_送PUT() throws Exception {
+        public void test405PutToCategoryId() throws Exception {
         // /api/category/{id} 只有 GET + DELETE，送 PUT → 405
         mockMvc.perform(put("/api/category/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -311,7 +311,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test405_對category_id_送PATCH() throws Exception {
+        public void test405PatchToCategoryId() throws Exception {
         // /api/category/{id} 只有 GET + DELETE，送 PATCH → 405
         mockMvc.perform(patch("/api/category/1"))
                 .andExpect(status().isMethodNotAllowed())
@@ -325,7 +325,7 @@ public class GlobalExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void test415_POST沒帶ContentType() throws Exception {
+        public void test415PostMissingContentType() throws Exception {
         mockMvc.perform(post("/api/course")
                         .content("{\"courseName\":\"測試\",\"price\":100.0}"))
                 .andExpect(status().isUnsupportedMediaType())
@@ -335,7 +335,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test415_ContentType為純文字() throws Exception {
+        public void test415ContentTypePlainText() throws Exception {
         mockMvc.perform(post("/api/course")
                         .contentType(MediaType.TEXT_PLAIN)
                         .content("courseName=測試"))
@@ -351,7 +351,7 @@ public class GlobalExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void test500_未預期例外() throws Exception {
+        public void test500UnexpectedError() throws Exception {
         when(courseService.findById(42L))
                 .thenThrow(new RuntimeException("Something bad happened"));
 
@@ -364,7 +364,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void test500_findAll拋出例外() throws Exception {
+        public void test500FindAllThrowsException() throws Exception {
         when(courseService.findAll())
                 .thenThrow(new RuntimeException("DB connection failed"));
 
@@ -380,7 +380,7 @@ public class GlobalExceptionHandlerTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testErrorResponse_三個欄位都存在() throws Exception {
+        public void testErrorResponseHasAllFields() throws Exception {
         when(courseService.findById(anyLong()))
                 .thenThrow(new ResourceNotFoundException("Course not found: 1"));
 
@@ -394,7 +394,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void testErrorResponse_details包含uri資訊() throws Exception {
+        public void testErrorResponseDetailsContainsUri() throws Exception {
         when(courseService.findById(anyLong()))
                 .thenThrow(new ResourceNotFoundException("Course not found: 7"));
 
@@ -406,7 +406,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void testGetAll_正常回傳() throws Exception {
+        public void testGetAllReturnsOk() throws Exception {
         when(courseService.findAll()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/course/all"))

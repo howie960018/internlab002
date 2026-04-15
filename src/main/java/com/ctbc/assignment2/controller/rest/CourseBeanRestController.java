@@ -54,6 +54,11 @@ public class CourseBeanRestController {
         return courseService.save(course);
     }
 
+    @PostMapping("/batch")
+    public List<CourseBean> saveBatch(@Valid @RequestBody List<CourseBean> courses) {
+        return courseService.saveBatch(courses);
+    }
+
     @PostMapping("/category/{categoryId}")
     public CourseBean saveWithCategory(
             @Valid @RequestBody CourseBean course,

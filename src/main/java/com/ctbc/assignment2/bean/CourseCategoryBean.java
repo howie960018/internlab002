@@ -23,21 +23,24 @@ public class CourseCategoryBean {
     @NotBlank(message = "類別名稱不可為空")
     private String categoryName;
 
+    // @ManyToOne: 自我關聯 (Parent)
+    // parent_id 為 null 代表主類別
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private CourseCategoryBean parent;
+
+    // @OneToMany: 子類別列表
+    @JsonIgnore
+    @OneToMany(mappedBy = "parent", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH})
+    private List<CourseCategoryBean> children;
+
     // @JsonIgnore: 防止物件轉換成 JSON 格式時發生無窮迴圈 (雙向關聯常見的問題)
     // @OneToMany: 「一對多」關聯 (一個類別可以有多個課程)。mappedBy = "category" 表示由多方(CourseBean)的 "category" 欄位來維護外鍵關係
     // cascade: 設定聯動操作，例如新增、合併、刷新等會連動影響子實體，但不包含移除 (CascadeType.REMOVE)
     @JsonIgnore
     @OneToMany(mappedBy = "category", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH})
     private List<CourseBean> courses;
-
-    // @PreRemove: 在實體被刪除前會觸發此方法
-    // 這裡的邏輯是將關聯的課程外鍵設為 null (Set Null 策略)，防止刪除類別時因為有課程還關聯著而拋出外鍵約束例外
-    @PreRemove
-    private void preRemove() {
-        if (courses != null) {
-            courses.forEach(course -> course.setCategory(null));
-        }
-    }
 
     // Getter / Setter
     public Long getId() { return id; }
@@ -48,4 +51,10 @@ public class CourseCategoryBean {
 
     public List<CourseBean> getCourses() { return courses; }
     public void setCourses(List<CourseBean> courses) { this.courses = courses; }
+
+    public CourseCategoryBean getParent() { return parent; }
+    public void setParent(CourseCategoryBean parent) { this.parent = parent; }
+
+    public List<CourseCategoryBean> getChildren() { return children; }
+    public void setChildren(List<CourseCategoryBean> children) { this.children = children; }
 }

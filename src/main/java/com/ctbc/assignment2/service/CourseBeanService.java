@@ -2,6 +2,8 @@ package com.ctbc.assignment2.service;
 
 import com.ctbc.assignment2.bean.CourseBean;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * 課程服務介面 (Service Interface)
@@ -31,4 +33,29 @@ public interface CourseBeanService {
      * 根據 ID 刪除課程
      */
     void deleteById(Long id);
+
+    /**
+     * 分頁查詢課程
+     */
+    Page<CourseBean> findPage(Pageable pageable);
+
+    /**
+     * 批次刪除課程
+     */
+    void deleteBatch(List<Long> ids);
+
+    /**
+     * 批次新增課程（All-or-Nothing）
+     */
+    List<CourseBean> saveBatch(List<CourseBean> courses);
+
+    /**
+     * 查詢指定類別下的課程
+     */
+    List<CourseBean> findByCategoryId(Long categoryId);
+
+    /**
+     * 查詢指定類別集合下的課程（分頁）
+     */
+    Page<CourseBean> findPageByCategoryIds(List<Long> categoryIds, Pageable pageable);
 }

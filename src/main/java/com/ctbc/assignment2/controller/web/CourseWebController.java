@@ -5,6 +5,8 @@ import com.ctbc.assignment2.exception.DuplicateCourseNameException;
 import com.ctbc.assignment2.service.CourseBeanService;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -31,9 +33,15 @@ public class CourseWebController {
      * Model: 提供給 View 顯示的前端資料容器
      */
     @GetMapping("/list")
-    public String list(Model model) {
-        // addAttribute(Key, Value) 可以在 Thymeleaf 以 ${courses} 取得其內容 
-        model.addAttribute("courses", courseService.findAll());
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(defaultValue = "10") int size,
+                       Model model) {
+        Page<CourseBean> pageResult = courseService.findPage(PageRequest.of(page, size));
+        // addAttribute(Key, Value) 可以在 Thymeleaf 以 ${courses} 取得其內容
+        model.addAttribute("courses", pageResult.getContent());
+        model.addAttribute("currentPage", pageResult.getNumber());
+        model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("pageSize", pageResult.getSize());
         return "course/list";
     }
 
@@ -92,6 +100,12 @@ public class CourseWebController {
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
         courseService.deleteById(id);
+        return "redirect:/course/list";
+    }
+
+    @PostMapping("/deleteBatch")
+    public String deleteBatch(@RequestParam(name = "ids", required = false) java.util.List<Long> ids) {
+        courseService.deleteBatch(ids);
         return "redirect:/course/list";
     }
 }

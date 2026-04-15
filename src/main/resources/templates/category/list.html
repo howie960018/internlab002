@@ -14,6 +14,7 @@
             <tr>
                 <th>ID</th>
                 <th>類別名稱</th>
+                <th>父類別</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -21,6 +22,7 @@
             <tr th:each="cat : ${categories}">
                 <td th:text="${cat.id}"></td>
                 <td th:text="${cat.categoryName}"></td>
+                <td th:text="${cat.parent != null ? cat.parent.categoryName : '主類別'}"></td>
                 <td>
                     <a th:href="@{/category/edit/{id}(id=${cat.id})}"
                        class="btn btn-sm btn-warning">編輯</a>

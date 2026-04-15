@@ -19,6 +19,17 @@
                    class="form-control">
             <div class="invalid-feedback" th:errors="*{categoryName}"></div>
         </div>
+        <div class="mb-3">
+            <label>父類別</label>
+            <select class="form-select" name="parentId">
+                <option value="" th:selected="${selectedParentId == null}">主類別</option>
+                <option th:each="opt : ${parentOptions}"
+                        th:value="${opt.id}"
+                        th:text="${opt.label}"
+                        th:disabled="${opt.disabled}"
+                        th:selected="${selectedParentId != null and selectedParentId == opt.id}"></option>
+            </select>
+        </div>
         <button type="submit" class="btn btn-success">儲存</button>
         <a th:href="@{/category/list}" class="btn btn-secondary">取消</a>
     </form>

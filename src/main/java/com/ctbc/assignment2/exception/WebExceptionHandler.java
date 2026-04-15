@@ -48,6 +48,22 @@ public class WebExceptionHandler {
         return "error";
     }
 
+    @ExceptionHandler(CategoryNotEmptyException.class)
+    public String handleCategoryNotEmpty(
+            CategoryNotEmptyException ex, Model model) {
+        model.addAttribute("errorTitle", "類別不可刪除");
+        model.addAttribute("errorMessage", ex.getMessage());
+        return "error";
+    }
+
+    @ExceptionHandler(CategoryHierarchyException.class)
+    public String handleCategoryHierarchy(
+            CategoryHierarchyException ex, Model model) {
+        model.addAttribute("errorTitle", "類別層級錯誤");
+        model.addAttribute("errorMessage", ex.getMessage());
+        return "error";
+    }
+
     // ── DB constraint 違反（409） ─────────────────────────────────
     /**
      * 當資料庫層級發生限制衝突（例如：儲存了違反 Unique 約束的資料，或是 Nullable 限制）

@@ -31,4 +31,14 @@ public interface CourseCategoryBeanService {
      * 根據 ID 刪除課程類別
      */
     void deleteById(Long id);
+
+    /**
+     * 取得所有主類別
+     */
+    List<CourseCategoryBean> findTopLevel();
+
+    /**
+     * 取得指定父類別底下的子類別
+     */
+    List<CourseCategoryBean> findChildren(Long parentId);
 }

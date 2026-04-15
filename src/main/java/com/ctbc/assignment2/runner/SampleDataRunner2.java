@@ -18,7 +18,7 @@ public class SampleDataRunner2 implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         CourseCategoryBean cat1 = new CourseCategoryBean();
-        cat1.setCategoryName("程式設計");
+        cat1.setCategoryName("軟體工程");
         categoryRepo.save(cat1);
 
         CourseCategoryBean cat2 = new CourseCategoryBean();

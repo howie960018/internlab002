@@ -9,9 +9,15 @@
     <h2>課程列表</h2>
     <a th:href="@{/course/form}" class="btn btn-primary mb-3">新增課程</a>
 
-    <table class="table table-bordered">
+    <form th:action="@{/course/deleteBatch}" method="post">
+        <div class="mb-3">
+            <button type="submit" class="btn btn-danger">批次刪除</button>
+        </div>
+
+        <table class="table table-bordered">
         <thead>
             <tr>
+                <th>選取</th>
                 <th>ID</th>
                 <th>課程名稱</th>
                 <th>價格</th>
@@ -23,6 +29,9 @@
         </thead>
         <tbody>
             <tr th:each="course : ${courses}">
+                <td>
+                    <input type="checkbox" name="ids" th:value="${course.id}">
+                </td>
                 <td th:text="${course.id}"></td>
                 <td th:text="${course.courseName}"></td>
                 <td th:text="${course.price}"></td>
@@ -38,7 +47,41 @@
                 </td>
             </tr>
         </tbody>
-    </table>
+        </table>
+
+        <nav aria-label="Course pagination">
+            <ul class="pagination">
+                <li class="page-item"
+                    th:classappend="${totalPages == 0 || currentPage == 0} ? ' disabled'">
+                    <a class="page-link"
+                       th:href="@{/course/list(page=0, size=${pageSize})}"
+                       aria-label="First">第一頁</a>
+                </li>
+                <li class="page-item"
+                    th:classappend="${totalPages == 0 || currentPage == 0} ? ' disabled'">
+                    <a class="page-link"
+                       th:href="@{/course/list(page=${currentPage - 1}, size=${pageSize})}"
+                       aria-label="Previous">上一頁</a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"
+                          th:text="'第 ' + (${totalPages == 0 ? 0 : currentPage + 1}) + ' / ' + ${totalPages} + ' 頁'"></span>
+                </li>
+                <li class="page-item"
+                    th:classappend="${totalPages == 0 || currentPage + 1 >= totalPages} ? ' disabled'">
+                    <a class="page-link"
+                       th:href="@{/course/list(page=${currentPage + 1}, size=${pageSize})}"
+                       aria-label="Next">下一頁</a>
+                </li>
+                <li class="page-item"
+                    th:classappend="${totalPages == 0 || currentPage + 1 >= totalPages} ? ' disabled'">
+                    <a class="page-link"
+                       th:href="@{/course/list(page=${totalPages - 1}, size=${pageSize})}"
+                       aria-label="Last">最後頁</a>
+                </li>
+            </ul>
+        </nav>
+    </form>
 </div>
 </body>
 </html>

@@ -2,6 +2,8 @@ package com.ctbc.assignment2;
 
 import com.ctbc.assignment2.bean.CourseBean;
 import com.ctbc.assignment2.bean.CourseCategoryBean;
+import com.ctbc.assignment2.exception.CategoryHierarchyException;
+import com.ctbc.assignment2.exception.CategoryNotEmptyException;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
 import com.ctbc.assignment2.exception.ResourceNotFoundException;
 import com.ctbc.assignment2.service.CourseBeanService;
@@ -10,6 +12,9 @@ import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -96,13 +101,13 @@ public class ServiceTest {
 
     @Test
     public void testDeleteNonExistentCourse() {
-        assertDoesNotThrow(() -> courseService.deleteById(99999L));
+        assertThrows(ResourceNotFoundException.class, () -> courseService.deleteById(99999L));
         System.out.println("✅ testDeleteNonExistentCourse 通過");
     }
 
     @Test
     public void testDeleteNonExistentCategory() {
-        assertDoesNotThrow(() -> categoryService.deleteById(99999L));
+        assertThrows(ResourceNotFoundException.class, () -> categoryService.deleteById(99999L));
         System.out.println("✅ testDeleteNonExistentCategory 通過");
     }
 
@@ -159,6 +164,23 @@ public class ServiceTest {
     }
 
     @Test
+    public void testDuplicateCourseNameIgnoreWhitespaceAndCase() {
+        String baseName = "Java基礎Test" + System.nanoTime();
+
+        CourseBean c1 = new CourseBean();
+        c1.setCourseName(baseName);
+        c1.setPrice(100.0);
+        courseService.save(c1);
+
+        CourseBean c2 = new CourseBean();
+        c2.setCourseName(baseName.toUpperCase().replace("", " ").trim());
+        c2.setPrice(200.0);
+
+        assertThrows(DuplicateCourseNameException.class, () -> courseService.save(c2));
+        System.out.println("✅ testDuplicateCourseNameIgnoreWhitespaceAndCase 通過");
+    }
+
+    @Test
     public void testDuplicateCategoryNameThrows() {
         CourseCategoryBean cat1 = new CourseCategoryBean();
         cat1.setCategoryName("重複類別_Dup");
@@ -207,7 +229,7 @@ public class ServiceTest {
     }
 
     @Test
-    public void testUpdateCourse_重複名稱拋例外() {
+    public void testUpdateCourseDuplicateNameThrows() {
         CourseBean c1 = new CourseBean();
         c1.setCourseName("課程名稱_已存在_Upd");
         c1.setPrice(100.0);
@@ -224,7 +246,7 @@ public class ServiceTest {
     }
 
     @Test
-    public void testUpdateCategory_重複名稱拋例外() {
+    public void testUpdateCategoryDuplicateNameThrows() {
         CourseCategoryBean cat1 = new CourseCategoryBean();
         cat1.setCategoryName("類別已存在_Upd");
         categoryService.save(cat1);
@@ -255,7 +277,7 @@ public class ServiceTest {
     // ════════════════════════════════════════════════════
 
     @Test
-    public void testSaveCategoryWithEmptyName_JPA_Validation觸發() {
+    public void testSaveCategoryWithEmptyNameTriggersJpaValidation() {
         // 【修正】JPA persist 時 @NotBlank 仍會觸發，應預期 ConstraintViolationException
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("  ");
@@ -265,7 +287,7 @@ public class ServiceTest {
     }
 
     @Test
-    public void testSaveCourseWithNegativePrice_JPA_Validation觸發() {
+    public void testSaveCourseWithNegativePriceTriggersJpaValidation() {
         // 【修正】JPA persist 時 @PositiveOrZero 仍會觸發，應預期 ConstraintViolationException
         CourseBean course = new CourseBean();
         course.setCourseName("負價格課程_Bypass");
@@ -276,7 +298,7 @@ public class ServiceTest {
     }
 
     @Test
-    public void testSaveCourseWithZeroPrice_合法邊界值() {
+    public void testSaveCourseWithZeroPriceValidBoundary() {
         // price = 0 符合 @PositiveOrZero，應成功存入
         CourseBean course = new CourseBean();
         course.setCourseName("零元課程_Zero");
@@ -288,7 +310,7 @@ public class ServiceTest {
     }
 
     @Test
-    public void testSaveCourse_無類別_categoryNull() {
+    public void testSaveCourseWithNullCategory() {
         CourseBean course = new CourseBean();
         course.setCourseName("無類別Service課程");
         course.setPrice(200.0);
@@ -297,5 +319,159 @@ public class ServiceTest {
         CourseBean found = courseService.findById(saved.getId());
         assertThat(found.getCategory()).isNull();
         System.out.println("✅ testSaveCourse_無類別_categoryNull 通過");
+    }
+
+    @Test
+    public void testFindPageCourses() {
+        CourseBean c1 = new CourseBean();
+        c1.setCourseName("分頁測試課程1");
+        c1.setPrice(100.0);
+        courseService.save(c1);
+
+        CourseBean c2 = new CourseBean();
+        c2.setCourseName("分頁測試課程2");
+        c2.setPrice(200.0);
+        courseService.save(c2);
+
+        CourseBean c3 = new CourseBean();
+        c3.setCourseName("分頁測試課程3");
+        c3.setPrice(300.0);
+        courseService.save(c3);
+
+        Page<CourseBean> page = courseService.findPage(PageRequest.of(0, 2));
+        assertThat(page.getContent().size()).isEqualTo(2);
+        System.out.println("✅ testFindPageCourses 通過");
+    }
+
+    @Test
+    public void testDeleteBatchCourses() {
+        CourseBean c1 = new CourseBean();
+        c1.setCourseName("批次刪除課程1");
+        c1.setPrice(100.0);
+        CourseBean saved1 = courseService.save(c1);
+
+        CourseBean c2 = new CourseBean();
+        c2.setCourseName("批次刪除課程2");
+        c2.setPrice(200.0);
+        CourseBean saved2 = courseService.save(c2);
+
+        courseService.deleteBatch(List.of(saved1.getId(), saved2.getId()));
+
+        assertThrows(ResourceNotFoundException.class, () -> courseService.findById(saved1.getId()));
+        assertThrows(ResourceNotFoundException.class, () -> courseService.findById(saved2.getId()));
+        System.out.println("✅ testDeleteBatchCourses 通過");
+    }
+
+    @Test
+    public void testSaveBatchCourses_AllOrNothing() {
+        CourseBean existing = new CourseBean();
+        existing.setCourseName("批次新增重複課程");
+        existing.setPrice(999.0);
+        courseService.save(existing);
+
+        int beforeCount = courseService.findAll().size();
+
+        CourseBean c1 = new CourseBean();
+        c1.setCourseName("批次新增課程1");
+        c1.setPrice(100.0);
+
+        CourseBean c2 = new CourseBean();
+        c2.setCourseName("批次新增重複課程");
+        c2.setPrice(200.0);
+
+        assertThrows(DuplicateCourseNameException.class,
+                () -> courseService.saveBatch(List.of(c1, c2)));
+
+        int afterCount = courseService.findAll().size();
+        assertThat(afterCount).isEqualTo(beforeCount);
+        System.out.println("✅ testSaveBatchCourses_AllOrNothing 通過");
+    }
+
+    @Test
+    public void testCreateChildCategoryUnderTopLevel() {
+        CourseCategoryBean parent = new CourseCategoryBean();
+        parent.setCategoryName("ParentCat" + System.nanoTime());
+        CourseCategoryBean savedParent = categoryService.save(parent);
+
+        CourseCategoryBean child = new CourseCategoryBean();
+        child.setCategoryName("ChildCat" + System.nanoTime());
+        child.setParent(savedParent);
+
+        CourseCategoryBean savedChild = categoryService.save(child);
+
+        assertThat(savedChild.getParent()).isNotNull();
+        assertThat(savedChild.getParent().getId()).isEqualTo(savedParent.getId());
+        System.out.println("✅ testCreateChildCategoryUnderTopLevel 通過");
+    }
+
+    @Test
+    public void testRejectChildAsParent() {
+        CourseCategoryBean parent = new CourseCategoryBean();
+        parent.setCategoryName("TopParent" + System.nanoTime());
+        CourseCategoryBean savedParent = categoryService.save(parent);
+
+        CourseCategoryBean child = new CourseCategoryBean();
+        child.setCategoryName("Child" + System.nanoTime());
+        child.setParent(savedParent);
+        CourseCategoryBean savedChild = categoryService.save(child);
+
+        CourseCategoryBean grandChild = new CourseCategoryBean();
+        grandChild.setCategoryName("GrandChild" + System.nanoTime());
+        grandChild.setParent(savedChild);
+
+        assertThrows(CategoryHierarchyException.class, () -> categoryService.save(grandChild));
+        System.out.println("✅ testRejectChildAsParent 通過");
+    }
+
+    @Test
+    public void testRejectParentChangeWhenHasChildren() {
+        CourseCategoryBean parent = new CourseCategoryBean();
+        parent.setCategoryName("RootParent" + System.nanoTime());
+        CourseCategoryBean savedParent = categoryService.save(parent);
+
+        CourseCategoryBean child = new CourseCategoryBean();
+        child.setCategoryName("RootChild" + System.nanoTime());
+        child.setParent(savedParent);
+        categoryService.save(child);
+
+        CourseCategoryBean newParent = new CourseCategoryBean();
+        newParent.setCategoryName("NewParent" + System.nanoTime());
+        CourseCategoryBean savedNewParent = categoryService.save(newParent);
+
+        savedParent.setParent(savedNewParent);
+
+        assertThrows(CategoryHierarchyException.class, () -> categoryService.save(savedParent));
+        System.out.println("✅ testRejectParentChangeWhenHasChildren 通過");
+    }
+
+    @Test
+    public void testDeleteCategoryWithChildrenNotAllowed() {
+        CourseCategoryBean parent = new CourseCategoryBean();
+        parent.setCategoryName("ParentDelete" + System.nanoTime());
+        CourseCategoryBean savedParent = categoryService.save(parent);
+
+        CourseCategoryBean child = new CourseCategoryBean();
+        child.setCategoryName("ChildDelete" + System.nanoTime());
+        child.setParent(savedParent);
+        categoryService.save(child);
+
+        assertThrows(CategoryNotEmptyException.class, () -> categoryService.deleteById(savedParent.getId()));
+        System.out.println("✅ testDeleteCategoryWithChildrenNotAllowed 通過");
+    }
+
+    @Test
+    public void testDeleteCategoryWithCoursesNotAllowed() {
+        CourseCategoryBean category = new CourseCategoryBean();
+        category.setCategoryName("CategoryWithCourse" + System.nanoTime());
+        CourseCategoryBean savedCategory = categoryService.save(category);
+
+        CourseBean course = new CourseBean();
+        course.setCourseName("CourseWithCategory" + System.nanoTime());
+        course.setPrice(100.0);
+        course.setCategory(savedCategory);
+        courseService.save(course);
+
+        assertThrows(CategoryNotEmptyException.class, () -> categoryService.deleteById(savedCategory.getId()));
+        System.out.println("✅ testDeleteCategoryWithCoursesNotAllowed 通過");
     }
 }

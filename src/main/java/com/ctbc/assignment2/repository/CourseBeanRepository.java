@@ -16,4 +16,17 @@ public interface CourseBeanRepository extends JpaRepository<CourseBean, Long> {
 
     // 尋找「除了指定 Id 外」是否還有相同課程名稱的資料，常用於更新驗證時。
     boolean existsByCourseNameAndIdNot(String courseName, Long id);
+
+    // 批次新增前，檢查這批名稱是否已存在於資料庫
+    boolean existsByCourseNameIn(java.util.List<String> courseNames);
+
+    // 檢查指定類別是否仍有課程
+    boolean existsByCategoryId(Long categoryId);
+
+    // 取得指定類別下的課程
+    java.util.List<CourseBean> findByCategoryId(Long categoryId);
+
+    // 依類別集合分頁查詢課程
+    org.springframework.data.domain.Page<CourseBean> findByCategoryIdIn(java.util.List<Long> categoryIds,
+                                                                         org.springframework.data.domain.Pageable pageable);
 }
