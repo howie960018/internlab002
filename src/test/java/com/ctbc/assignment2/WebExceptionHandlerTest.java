@@ -6,6 +6,7 @@ import com.ctbc.assignment2.controller.web.HomeWebController;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
 import com.ctbc.assignment2.exception.ResourceNotFoundException;
 import com.ctbc.assignment2.exception.WebExceptionHandler;
+import com.ctbc.assignment2.security.SecurityConfig;
 import com.ctbc.assignment2.service.CourseBeanService;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.Collections;
 
@@ -23,6 +25,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 // @WebMvcTest 負責啟動 Controller 層環境，並註冊指定的 Web 控制器，不會完整載入整個 Spring (沒包含 Service 跟 DB 層)
@@ -32,7 +35,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         HomeWebController.class
 })
 // 導入我們想要測試的例外處理器（因為它可能有 @ControllerAdvice 但在這裡預設沒被掃到）
-@Import(WebExceptionHandler.class)
+@Import({WebExceptionHandler.class, SecurityConfig.class, TestSecurityBeans.class})
+@WithMockUser(roles = "ADMIN")
 public class WebExceptionHandlerTest {
 
     @Autowired
@@ -80,7 +84,7 @@ public class WebExceptionHandlerTest {
         doThrow(new ResourceNotFoundException("Course not found: 99999"))
                 .when(courseService).deleteById(99999L);
 
-        mockMvc.perform(get("/course/delete/99999"))
+        mockMvc.perform(post("/course/delete/99999").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attribute("errorMessage", "Course not found: 99999"));
@@ -93,7 +97,7 @@ public class WebExceptionHandlerTest {
         doThrow(new ResourceNotFoundException("Category not found: 99999"))
                 .when(categoryService).deleteById(99999L);
 
-        mockMvc.perform(get("/category/delete/99999"))
+        mockMvc.perform(post("/category/delete/99999").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attribute("errorMessage", "Category not found: 99999"));
@@ -118,6 +122,7 @@ public class WebExceptionHandlerTest {
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(post("/course/save")
+                        .with(csrf())
                         .param("courseName", "Java 基礎")
                         .param("price", "3000.0"))
                 .andExpect(status().isOk())
@@ -134,6 +139,7 @@ public class WebExceptionHandlerTest {
                 .thenThrow(new DuplicateCourseNameException("類別名稱已存在：Java"));
 
         mockMvc.perform(post("/category/save")
+                        .with(csrf())
                         .param("categoryName", "Java"))
                 .andExpect(status().isOk())
                 // 【修正】Controller catch 後 return "category/form"，不走 WebExceptionHandler
@@ -154,6 +160,7 @@ public class WebExceptionHandlerTest {
                 .thenThrow(new DataIntegrityViolationException("constraint violation"));
 
         mockMvc.perform(post("/category/save")
+                        .with(csrf())
                         .param("categoryName", "重複類別"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
@@ -169,6 +176,7 @@ public class WebExceptionHandlerTest {
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(post("/course/save")
+                        .with(csrf())
                         .param("courseName", "測試課程")
                         .param("price", "100.0"))
                 .andExpect(status().isOk())
@@ -204,7 +212,7 @@ public class WebExceptionHandlerTest {
 
     @Test
         public void testWeb400DeletePathVariableTypeMismatchToErrorView() throws Exception {
-        mockMvc.perform(get("/course/delete/notANumber"))
+                mockMvc.perform(post("/course/delete/notANumber").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attributeExists("errorMessage"));
@@ -221,6 +229,7 @@ public class WebExceptionHandlerTest {
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(post("/course/save")
+                                                .with(csrf())
                         .param("courseName", "")
                         .param("price", "100.0"))
                 .andExpect(status().isOk())
@@ -232,6 +241,7 @@ public class WebExceptionHandlerTest {
     @Test
         public void testWebValidationFailCategoryNameBlankStayOnForm() throws Exception {
         mockMvc.perform(post("/category/save")
+                                                .with(csrf())
                         .param("categoryName", ""))
                 .andExpect(status().isOk())
                 .andExpect(view().name("category/form"));
@@ -244,6 +254,7 @@ public class WebExceptionHandlerTest {
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(post("/course/save")
+                                                .with(csrf())
                         .param("courseName", "測試課程")
                         .param("price", "-1.0"))
                 .andExpect(status().isOk())

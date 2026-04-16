@@ -2,17 +2,20 @@ package com.ctbc.assignment2;
 
 import com.ctbc.assignment2.bean.CourseBean;
 import com.ctbc.assignment2.controller.web.CourseWebController;
+import com.ctbc.assignment2.security.SecurityConfig;
 import com.ctbc.assignment2.service.CourseBeanService;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.List;
 
@@ -22,9 +25,12 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = {CourseWebController.class})
+@Import({SecurityConfig.class, TestSecurityBeans.class})
+@WithMockUser(roles = "ADMIN")
 public class CourseWebControllerTest {
 
     @Autowired
@@ -71,7 +77,7 @@ public class CourseWebControllerTest {
     public void testDeleteHappyPath() throws Exception {
         doNothing().when(courseService).deleteById(1L);
 
-        mockMvc.perform(get("/course/delete/1"))
+        mockMvc.perform(post("/course/delete/1").with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/course/list"));
 
@@ -83,6 +89,7 @@ public class CourseWebControllerTest {
         doNothing().when(courseService).deleteBatch(any());
 
         mockMvc.perform(post("/course/deleteBatch")
+                .with(csrf())
                         .param("ids", "1", "2", "3"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/course/list"));
@@ -132,6 +139,7 @@ public class CourseWebControllerTest {
         when(courseService.save(any())).thenReturn(saved);
 
         mockMvc.perform(post("/course/save")
+                .with(csrf())
                         .param("courseName", "課程A")
                         .param("price", "100.0"))
                 .andExpect(status().is3xxRedirection())

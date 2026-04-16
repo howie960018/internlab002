@@ -106,7 +106,7 @@ public class CategoryWebController {
     /**
      * 利用 id 進行刪除
      */
-    @GetMapping("/delete/{id}")
+    @PostMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
         categoryService.deleteById(id);
         return "redirect:/category/list";

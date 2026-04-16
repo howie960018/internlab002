@@ -11,6 +11,7 @@
     <div th:if="${duplicateError}" class="alert alert-danger" th:text="${duplicateError}"></div>
 
     <form th:action="@{/category/save}" th:object="${category}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
         <input type="hidden" th:field="*{id}">
         <div class="mb-3">
             <label>類別名稱</label>

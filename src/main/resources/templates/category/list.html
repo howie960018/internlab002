@@ -26,9 +26,12 @@
                 <td>
                     <a th:href="@{/category/edit/{id}(id=${cat.id})}"
                        class="btn btn-sm btn-warning">編輯</a>
-                    <a th:href="@{/category/delete/{id}(id=${cat.id})}"
-                       class="btn btn-sm btn-danger"
-                       onclick="return confirm('確定刪除？')">刪除</a>
+                    <form th:action="@{/category/delete/{id}(id=${cat.id})}"
+                          method="post" class="d-inline"
+                          onsubmit="return confirm('確定刪除？')">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-sm btn-danger">刪除</button>
+                    </form>
                 </td>
             </tr>
         </tbody>

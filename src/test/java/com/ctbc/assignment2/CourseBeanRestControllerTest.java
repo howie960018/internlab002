@@ -2,15 +2,18 @@ package com.ctbc.assignment2;
 
 import com.ctbc.assignment2.bean.CourseBean;
 import com.ctbc.assignment2.controller.rest.CourseBeanRestController;
+import com.ctbc.assignment2.security.SecurityConfig;
 import com.ctbc.assignment2.service.CourseBeanService;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -22,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = {CourseBeanRestController.class})
+@Import({SecurityConfig.class, TestSecurityBeans.class})
 public class CourseBeanRestControllerTest {
 
     @Autowired
@@ -34,6 +38,7 @@ public class CourseBeanRestControllerTest {
     private CourseCategoryBeanService categoryService;
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testGetByIdHappyPath() throws Exception {
         CourseBean course = new CourseBean();
         course.setId(1L);
@@ -52,6 +57,7 @@ public class CourseBeanRestControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteHappyPath() throws Exception {
         doNothing().when(courseService).deleteById(1L);
 
@@ -62,6 +68,7 @@ public class CourseBeanRestControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testGetAllHappyPath() throws Exception {
         CourseBean c1 = new CourseBean();
         c1.setId(1L);
@@ -78,6 +85,7 @@ public class CourseBeanRestControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testSaveHappyPath() throws Exception {
         CourseBean saved = new CourseBean();
         saved.setId(1L);
@@ -96,6 +104,7 @@ public class CourseBeanRestControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testSaveWithCategoryHappyPath() throws Exception {
         com.ctbc.assignment2.bean.CourseCategoryBean category = new com.ctbc.assignment2.bean.CourseCategoryBean();
         category.setId(2L);
@@ -121,6 +130,7 @@ public class CourseBeanRestControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testBatchSaveHappyPath() throws Exception {
         CourseBean c1 = new CourseBean();
         c1.setId(1L);

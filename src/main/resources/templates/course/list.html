@@ -10,6 +10,7 @@
     <a th:href="@{/course/form}" class="btn btn-primary mb-3">新增課程</a>
 
     <form th:action="@{/course/deleteBatch}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
         <div class="mb-3">
             <button type="submit" class="btn btn-danger">批次刪除</button>
         </div>
@@ -41,9 +42,12 @@
                 <td>
                     <a th:href="@{/course/edit/{id}(id=${course.id})}"
                        class="btn btn-sm btn-warning">編輯</a>
-                    <a th:href="@{/course/delete/{id}(id=${course.id})}"
-                       class="btn btn-sm btn-danger"
-                       onclick="return confirm('確定刪除？')">刪除</a>
+                    <form th:action="@{/course/delete/{id}(id=${course.id})}"
+                          method="post" class="d-inline"
+                          onsubmit="return confirm('確定刪除？')">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-sm btn-danger">刪除</button>
+                    </form>
                 </td>
             </tr>
         </tbody>

@@ -5,6 +5,7 @@ import com.ctbc.assignment2.controller.rest.CourseBeanRestController;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
 import com.ctbc.assignment2.exception.GlobalExceptionHandler;
 import com.ctbc.assignment2.exception.ResourceNotFoundException;
+import com.ctbc.assignment2.security.SecurityConfig;
 import com.ctbc.assignment2.service.CourseBeanService;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.List;
 
@@ -29,7 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         CourseBeanRestController.class,
         CategoryBeanRestController.class
 })
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, SecurityConfig.class, TestSecurityBeans.class})
+@WithMockUser(roles = "ADMIN")
 public class GlobalExceptionHandlerTest {
 
     @Autowired

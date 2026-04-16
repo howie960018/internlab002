@@ -97,7 +97,7 @@ public class CourseWebController {
         return "course/form"; // 前端使用同一支 form.html 來處理新增與修改
     }
 
-    @GetMapping("/delete/{id}")
+    @PostMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
         courseService.deleteById(id);
         return "redirect:/course/list";
