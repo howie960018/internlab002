@@ -147,6 +147,25 @@ public class CourseBeanServiceJPAImplement implements CourseBeanService {
         return repo.findByCategoryIdIn(categoryIds, pageable);
     }
 
+    @Override
+    public Page<CourseBean> findPageByName(String keyword, Pageable pageable) {
+        if (keyword == null || keyword.isBlank()) {
+            return Page.empty(pageable);
+        }
+        return repo.findByCourseNameContainingIgnoreCase(keyword.trim(), pageable);
+    }
+
+    @Override
+    public Page<CourseBean> findPageByCategoryIdsAndName(List<Long> categoryIds, String keyword, Pageable pageable) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        if (keyword == null || keyword.isBlank()) {
+            return repo.findByCategoryIdIn(categoryIds, pageable);
+        }
+        return repo.findByCategoryIdInAndCourseNameContainingIgnoreCase(categoryIds, keyword.trim(), pageable);
+    }
+
     private String normalizeName(String name) {
         if (name == null) {
             return null;

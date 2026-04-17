@@ -58,4 +58,14 @@ public interface CourseBeanService {
      * 查詢指定類別集合下的課程（分頁）
      */
     Page<CourseBean> findPageByCategoryIds(List<Long> categoryIds, Pageable pageable);
+
+    /**
+     * 依名稱關鍵字分頁查詢課程
+     */
+    Page<CourseBean> findPageByName(String keyword, Pageable pageable);
+
+    /**
+     * 依類別集合與名稱關鍵字分頁查詢課程
+     */
+    Page<CourseBean> findPageByCategoryIdsAndName(List<Long> categoryIds, String keyword, Pageable pageable);
 }

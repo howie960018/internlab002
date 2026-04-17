@@ -46,29 +46,38 @@ public class SecurityWebTest {
     private CourseCategoryBeanService categoryService;
 
     @Test
-    public void unauthenticatedUserAccessCourseListRedirectsToLogin() throws Exception {
-        mockMvc.perform(get("/course/list"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("**/login"));
-    }
+        public void unauthenticatedUserCanAccessCourses() throws Exception {
+                stubCoursesBrowse();
+
+                mockMvc.perform(get("/courses"))
+                                .andExpect(status().isOk());
+        }
+
+            @Test
+            public void unauthenticatedUserCanAccessLoginAndRegister() throws Exception {
+                mockMvc.perform(get("/login"))
+                        .andExpect(status().isOk());
+
+                mockMvc.perform(get("/register"))
+                        .andExpect(status().isOk());
+            }
 
     @Test
     @WithMockUser(roles = "USER")
-    public void userRoleCanAccessCourseListAndCategoryBrowse() throws Exception {
-        stubCourseList();
-        stubCategoryBrowse();
+    public void userRoleCanAccessCoursesButNotAdmin() throws Exception {
+        stubCoursesBrowse();
 
-        mockMvc.perform(get("/course/list"))
+        mockMvc.perform(get("/courses"))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/category/browse"))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/admin/dashboard"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(roles = "USER")
     public void userRoleCannotAccessAdminOnlyCourseForm() throws Exception {
-        mockMvc.perform(get("/course/form"))
+                mockMvc.perform(get("/admin/course/form"))
                 .andExpect(status().isForbidden());
     }
 
@@ -78,17 +87,17 @@ public class SecurityWebTest {
         when(categoryService.findAll()).thenReturn(List.of());
         when(categoryService.findTopLevel()).thenReturn(List.of());
 
-        mockMvc.perform(get("/course/form"))
+        mockMvc.perform(get("/admin/course/form"))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/category/list"))
+        mockMvc.perform(get("/admin/categories"))
                 .andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     public void csrfIsRequiredForPostWebRoutes() throws Exception {
-        mockMvc.perform(post("/course/save")
+                mockMvc.perform(post("/admin/course/save")
                         .param("courseName", "測試課程")
                         .param("price", "100.0"))
                 .andExpect(status().isForbidden());
@@ -99,13 +108,13 @@ public class SecurityWebTest {
     public void deleteRoutesRequirePostAndCsrf() throws Exception {
         doNothing().when(courseService).deleteById(1L);
 
-        mockMvc.perform(get("/course/delete/1"))
+        mockMvc.perform(get("/admin/course/delete/1"))
                 .andExpect(status().isMethodNotAllowed());
 
-        mockMvc.perform(post("/course/delete/1"))
+        mockMvc.perform(post("/admin/course/delete/1"))
                 .andExpect(status().isForbidden());
 
-        mockMvc.perform(post("/course/delete/1").with(csrf()))
+        mockMvc.perform(post("/admin/course/delete/1").with(csrf()))
                 .andExpect(status().is3xxRedirection());
     }
 
@@ -116,20 +125,14 @@ public class SecurityWebTest {
         org.junit.jupiter.api.Assertions.assertEquals(Duration.ofMinutes(30), timeout);
     }
 
-    private void stubCourseList() {
-        Page<CourseBean> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
-        when(courseService.findPage(any(Pageable.class))).thenReturn(page);
-    }
-
-    private void stubCategoryBrowse() {
+        private void stubCoursesBrowse() {
         CourseCategoryBean category = new CourseCategoryBean();
         category.setId(1L);
         category.setCategoryName("主類別");
 
         when(categoryService.findTopLevel()).thenReturn(List.of(category));
         when(categoryService.findChildren(1L)).thenReturn(List.of());
-        when(categoryService.findById(1L)).thenReturn(category);
-        when(courseService.findPageByCategoryIds(any(), any()))
-                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+                when(courseService.findPage(any(Pageable.class)))
+                                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
     }
 }

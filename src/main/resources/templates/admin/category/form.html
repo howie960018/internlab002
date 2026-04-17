@@ -1,29 +1,31 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>類別表單</title>
+    <title>Admin - Category Form</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
 </head>
 <body>
-<div class="container mt-4">
-    <h2>類別表單</h2>
+<div th:replace="layout :: navbar"></div>
+
+<main class="container py-4" style="max-width: 720px;">
+    <h2 class="mb-3">Category form</h2>
 
     <div th:if="${duplicateError}" class="alert alert-danger" th:text="${duplicateError}"></div>
 
-    <form th:action="@{/category/save}" th:object="${category}" method="post">
+    <form th:action="@{/admin/category/save}" th:object="${category}" method="post">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
         <input type="hidden" th:field="*{id}">
         <div class="mb-3">
-            <label>類別名稱</label>
+            <label class="form-label">Category name</label>
             <input type="text" th:field="*{categoryName}"
                    th:classappend="${#fields.hasErrors('categoryName')} ? 'is-invalid'"
                    class="form-control">
             <div class="invalid-feedback" th:errors="*{categoryName}"></div>
         </div>
         <div class="mb-3">
-            <label>父類別</label>
+            <label class="form-label">Parent category</label>
             <select class="form-select" name="parentId">
-                <option value="" th:selected="${selectedParentId == null}">主類別</option>
+                <option value="" th:selected="${selectedParentId == null}">Top level</option>
                 <option th:each="opt : ${parentOptions}"
                         th:value="${opt.id}"
                         th:text="${opt.label}"
@@ -31,9 +33,12 @@
                         th:selected="${selectedParentId != null and selectedParentId == opt.id}"></option>
             </select>
         </div>
-        <button type="submit" class="btn btn-success">儲存</button>
-        <a th:href="@{/category/list}" class="btn btn-secondary">取消</a>
+        <button type="submit" class="btn btn-success">Save</button>
+        <a th:href="@{/admin/categories}" class="btn btn-secondary">Cancel</a>
     </form>
-</div>
+</main>
+
+<div th:replace="layout :: footer"></div>
+<script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>

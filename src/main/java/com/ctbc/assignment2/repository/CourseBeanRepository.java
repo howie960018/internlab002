@@ -29,4 +29,14 @@ public interface CourseBeanRepository extends JpaRepository<CourseBean, Long> {
     // 依類別集合分頁查詢課程
     org.springframework.data.domain.Page<CourseBean> findByCategoryIdIn(java.util.List<Long> categoryIds,
                                                                          org.springframework.data.domain.Pageable pageable);
+
+        // 依名稱關鍵字分頁查詢課程
+        org.springframework.data.domain.Page<CourseBean> findByCourseNameContainingIgnoreCase(String courseName,
+                                                   org.springframework.data.domain.Pageable pageable);
+
+        // 依類別集合與名稱關鍵字分頁查詢課程
+        org.springframework.data.domain.Page<CourseBean> findByCategoryIdInAndCourseNameContainingIgnoreCase(
+            java.util.List<Long> categoryIds,
+            String courseName,
+            org.springframework.data.domain.Pageable pageable);
 }

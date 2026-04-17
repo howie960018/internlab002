@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Course detail</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div th:replace="layout :: navbar"></div>
+
+<main class="container py-4" style="max-width: 960px;">
+    <a class="btn btn-link px-0" th:href="@{/courses}">Back to courses</a>
+
+    <div class="row g-4">
+        <div class="col-md-5">
+            <img class="img-fluid rounded shadow-sm"
+                 th:if="${course.coverImageUrl != null and !#strings.isEmpty(course.coverImageUrl)}"
+                 th:src="${course.coverImageUrl}" alt="Course cover">
+            <div th:if="${course.coverImageUrl == null or #strings.isEmpty(course.coverImageUrl)}"
+                 class="bg-light rounded" style="height: 320px;"></div>
+        </div>
+        <div class="col-md-7">
+            <h2 class="mb-2" th:text="${course.courseName}">Course name</h2>
+            <div class="text-muted mb-2"
+                 th:text="${course.category != null ? course.category.categoryName : 'Uncategorized'}"></div>
+            <div class="h4 mb-3" th:text="'$' + ${course.price}">$0</div>
+
+            <p class="lead" th:if="${course.courseSummary != null}"
+               th:text="${course.courseSummary}"></p>
+
+            <dl class="row mb-4">
+                <dt class="col-sm-4">Instructor</dt>
+                <dd class="col-sm-8" th:text="${course.instructorName != null ? course.instructorName : 'TBD'}"></dd>
+
+                <dt class="col-sm-4">Duration (hours)</dt>
+                <dd class="col-sm-8" th:text="${course.durationHours != null ? course.durationHours : 'TBD'}"></dd>
+
+                <dt class="col-sm-4">Level</dt>
+                <dd class="col-sm-8" th:text="${course.level != null ? course.level : 'TBD'}"></dd>
+            </dl>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h4>Course description</h4>
+    <p th:if="${course.courseDescription != null}" th:text="${course.courseDescription}"></p>
+    <p class="text-muted" th:if="${course.courseDescription == null}">No description yet.</p>
+</main>
+
+<div th:replace="layout :: footer"></div>
+<script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

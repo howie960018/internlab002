@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div th:replace="layout :: navbar"></div>
+
+<main class="container py-4" style="max-width: 520px;">
+    <h2 class="mb-3">Login</h2>
+
+    <div th:if="${param.logout}" class="alert alert-success">
+        You have been logged out.
+    </div>
+
+    <div th:if="${param.registered}" class="alert alert-success">
+        Registration successful. Please log in.
+    </div>
+
+    <div th:if="${param.error}" class="alert alert-danger">
+        Invalid username or password.
+    </div>
+
+    <form th:action="@{/login}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+        <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control" autocomplete="username" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" autocomplete="current-password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+        <div class="text-center mt-3">
+            <a th:href="@{/register}">No account? Register</a>
+        </div>
+    </form>
+</main>
+
+<div th:replace="layout :: footer"></div>
+<script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

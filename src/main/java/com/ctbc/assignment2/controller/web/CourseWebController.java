@@ -18,7 +18,7 @@ import jakarta.validation.Valid;
  * 負責處理與「課程」相關之前端請求與畫面切換。
  */
 @Controller // 標記為 MVC Controller (會掃描成 Bean 並返回 View 頁面名稱)
-@RequestMapping("/course") // 請求的共同前綴都會是: /course
+@RequestMapping("/admin") // 請求的共同前綴都會是: /admin
 public class CourseWebController {
 
     // 依賴注入 (DI)：將 CourseBeanService 等由 Spring 自動實例注入
@@ -32,7 +32,7 @@ public class CourseWebController {
      * @GetMapping 表示對應 HTTP 的 GET 請求
      * Model: 提供給 View 顯示的前端資料容器
      */
-    @GetMapping("/list")
+    @GetMapping("/courses")
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(defaultValue = "10") int size,
                        Model model) {
@@ -42,17 +42,17 @@ public class CourseWebController {
         model.addAttribute("currentPage", pageResult.getNumber());
         model.addAttribute("totalPages", pageResult.getTotalPages());
         model.addAttribute("pageSize", pageResult.getSize());
-        return "course/list";
+        return "admin/course/list";
     }
 
     /**
      * 跳轉到新增課程的表單
      */
-    @GetMapping("/form")
+    @GetMapping("/course/form")
     public String showForm(Model model) {
         model.addAttribute("course", new CourseBean()); // 初始化空物件給表單，用於欄位綁定
         model.addAttribute("categories", categoryService.findAll()); // 準備類別選單資料
-        return "course/form";
+        return "admin/course/form";
     }
 
     /**
@@ -61,7 +61,7 @@ public class CourseWebController {
      * @ModelAttribute("course"): 自動封裝前端傳入表單對應欄位，如果有錯誤會回顯示在畫面上
      * @RequestParam: 根據表單的 name 屬性抓取特定欄位的值 (通常用來接外鍵 ID / 隱藏欄位)，required = false 允許為 null
      */
-    @PostMapping("/save")
+    @PostMapping("/course/save")
     public String save(@Valid @ModelAttribute("course") CourseBean course,
                        BindingResult bindingResult,
                        @RequestParam(required = false) Long categoryId,
@@ -70,7 +70,7 @@ public class CourseWebController {
             // 【修正】BindingResult 有錯時，Thymeleaf th:object="${course}" 需要 model 中有 course
             // 使用 @ModelAttribute("course") 後 Spring 會自動放入，但仍補上 categories 避免 NPE
             model.addAttribute("categories", categoryService.findAll());
-            return "course/form";
+            return "admin/course/form";
         }
         try {
             if (categoryId != null) {
@@ -81,31 +81,31 @@ public class CourseWebController {
         } catch (DuplicateCourseNameException e) {
             model.addAttribute("categories", categoryService.findAll());
             model.addAttribute("duplicateError", e.getMessage());
-            return "course/form";
+            return "admin/course/form";
         }
         // redirect 表示這不是個檔案路徑，而是告訴瀏覽器重新要求 URL 路徑
-        return "redirect:/course/list";
+        return "redirect:/admin/courses";
     }
 
     /**
      * 用於編輯，將網址列傳入的 id 抓出來 (@PathVariable)，查詢資料庫帶入表單顯示
      */
-    @GetMapping("/edit/{id}")
+    @GetMapping("/course/edit/{id}")
     public String edit(@PathVariable Long id, Model model) {
         model.addAttribute("course", courseService.findById(id));
         model.addAttribute("categories", categoryService.findAll());
-        return "course/form"; // 前端使用同一支 form.html 來處理新增與修改
+        return "admin/course/form"; // 前端使用同一支 form.html 來處理新增與修改
     }
 
-    @PostMapping("/delete/{id}")
+    @PostMapping("/course/delete/{id}")
     public String delete(@PathVariable Long id) {
         courseService.deleteById(id);
-        return "redirect:/course/list";
+        return "redirect:/admin/courses";
     }
 
-    @PostMapping("/deleteBatch")
+    @PostMapping("/course/deleteBatch")
     public String deleteBatch(@RequestParam(name = "ids", required = false) java.util.List<Long> ids) {
         courseService.deleteBatch(ids);
-        return "redirect:/course/list";
+        return "redirect:/admin/courses";
     }
 }

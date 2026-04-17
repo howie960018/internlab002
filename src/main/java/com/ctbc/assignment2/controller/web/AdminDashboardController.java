@@ -1,17 +1,16 @@
 package com.ctbc.assignment2.controller.web;
 
-import com.ctbc.assignment2.bean.CourseBean;
 import com.ctbc.assignment2.service.CourseBeanService;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-public class HomeWebController {
+@RequestMapping("/admin")
+public class AdminDashboardController {
 
     @Autowired
     private CourseBeanService courseService;
@@ -19,11 +18,10 @@ public class HomeWebController {
     @Autowired
     private CourseCategoryBeanService categoryService;
 
-    @GetMapping({"/", "/home"})
-    public String home(Model model) {
-        Page<CourseBean> featured = courseService.findPage(PageRequest.of(0, 6));
-        model.addAttribute("featuredCourses", featured.getContent());
-        model.addAttribute("categories", categoryService.findTopLevel());
-        return "home";
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
+        model.addAttribute("courseCount", courseService.findAll().size());
+        model.addAttribute("categoryCount", categoryService.findAll().size());
+        return "admin/dashboard";
     }
 }

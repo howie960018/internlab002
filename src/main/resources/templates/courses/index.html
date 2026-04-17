@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Courses</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div th:replace="layout :: navbar"></div>
+
+<main class="container py-4">
+    <div class="row">
+        <aside class="col-lg-3 mb-4">
+            <h5 class="mb-3">Categories</h5>
+            <div class="accordion" id="categoryAccordion">
+                <div class="accordion-item" th:each="node, iter : ${categories}">
+                    <h2 class="accordion-header" th:attr="id='heading' + ${iter.index}">
+                        <button class="accordion-button collapsed" type="button"
+                                th:attr="data-bs-toggle='collapse', data-bs-target='#collapse' + ${iter.index}">
+                            <span th:text="${node.category.categoryName}"></span>
+                        </button>
+                    </h2>
+                    <div class="accordion-collapse collapse"
+                         th:attr="id='collapse' + ${iter.index}"
+                         th:classappend="${selectedCategory != null and (selectedCategory.id == node.category.id or (selectedCategory.parent != null and selectedCategory.parent.id == node.category.id))} ? ' show'">
+                        <div class="accordion-body">
+                            <a class="d-block mb-2"
+                               th:href="@{/courses(id=${node.category.id}, q=${query})}">View this category</a>
+                            <div th:each="child : ${node.children}">
+                                <a class="d-block ms-2"
+                                   th:classappend="${selectedCategoryId != null and selectedCategoryId == child.id} ? ' fw-semibold text-primary'"
+                                   th:href="@{/courses(id=${child.id}, q=${query})}"
+                                   th:text="'-- ' + ${child.categoryName}"></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <section class="col-lg-9">
+            <form class="d-flex gap-2 mb-3" method="get" th:action="@{/courses}">
+                <input type="hidden" name="id" th:if="${selectedCategoryId != null}" th:value="${selectedCategoryId}">
+                <input class="form-control" name="q" placeholder="Search courses" th:value="${query}">
+                <button type="submit" class="btn btn-outline-primary">Search</button>
+            </form>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"
+                    th:text="${selectedCategory != null ? selectedCategory.categoryName : 'All courses'}"></h4>
+                <span class="text-muted" th:text="'Total ' + ${courses != null ? courses.size() : 0} + ' shown'"></span>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6 col-xl-4" th:each="course : ${courses}">
+                    <div class="card h-100 shadow-sm">
+                        <div th:if="${course.coverImageUrl != null and !#strings.isEmpty(course.coverImageUrl)}">
+                            <img class="card-img-top" th:src="${course.coverImageUrl}" alt="Course cover">
+                        </div>
+                        <div th:if="${course.coverImageUrl == null or #strings.isEmpty(course.coverImageUrl)}"
+                             class="bg-light" style="height: 160px;"></div>
+                        <div class="card-body">
+                            <h5 class="card-title" th:text="${course.courseName}">Course name</h5>
+                            <p class="text-muted small mb-2"
+                               th:text="${course.category != null ? course.category.categoryName : 'Uncategorized'}"></p>
+                            <p class="small" th:if="${course.courseSummary != null}"
+                               th:text="${course.courseSummary}"></p>
+                            <div class="fw-semibold" th:text="'$' + ${course.price}">$0</div>
+                            <a class="btn btn-sm btn-outline-primary mt-3"
+                               th:href="@{/courses/{id}(id=${course.id})}">View details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-muted mt-3" th:if="${courses == null || courses.size() == 0}">
+                No courses found.
+            </div>
+
+            <nav aria-label="Course pagination" class="mt-4" th:if="${courses != null}">
+                <ul class="pagination">
+                    <li class="page-item"
+                        th:classappend="${totalPages == 0 || currentPage == 0} ? ' disabled'">
+                        <a class="page-link"
+                           th:href="@{/courses(id=${selectedCategoryId}, q=${query}, page=0, size=${pageSize})}"
+                           aria-label="First">First</a>
+                    </li>
+                    <li class="page-item"
+                        th:classappend="${totalPages == 0 || currentPage == 0} ? ' disabled'">
+                        <a class="page-link"
+                           th:href="@{/courses(id=${selectedCategoryId}, q=${query}, page=${currentPage - 1}, size=${pageSize})}"
+                           aria-label="Previous">Previous</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link"
+                              th:text="'Page ' + (${totalPages == 0 ? 0 : currentPage + 1}) + ' of ' + ${totalPages}"></span>
+                    </li>
+                    <li class="page-item"
+                        th:classappend="${totalPages == 0 || currentPage + 1 >= totalPages} ? ' disabled'">
+                        <a class="page-link"
+                           th:href="@{/courses(id=${selectedCategoryId}, q=${query}, page=${currentPage + 1}, size=${pageSize})}"
+                           aria-label="Next">Next</a>
+                    </li>
+                    <li class="page-item"
+                        th:classappend="${totalPages == 0 || currentPage + 1 >= totalPages} ? ' disabled'">
+                        <a class="page-link"
+                           th:href="@{/courses(id=${selectedCategoryId}, q=${query}, page=${totalPages - 1}, size=${pageSize})}"
+                           aria-label="Last">Last</a>
+                    </li>
+                </ul>
+            </nav>
+        </section>
+    </div>
+</main>
+
+<div th:replace="layout :: footer"></div>
+<script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

@@ -2,25 +2,23 @@ package com.ctbc.assignment2;
 
 import com.ctbc.assignment2.bean.CourseBean;
 import com.ctbc.assignment2.controller.web.CourseWebController;
-import com.ctbc.assignment2.security.SecurityConfig;
+import com.ctbc.assignment2.security.JwtService;
 import com.ctbc.assignment2.service.CourseBeanService;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,8 +27,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = {CourseWebController.class})
-@Import({SecurityConfig.class, TestSecurityBeans.class})
-@WithMockUser(roles = "ADMIN")
+@AutoConfigureMockMvc(addFilters = false)
 public class CourseWebControllerTest {
 
     @Autowired
@@ -41,6 +38,9 @@ public class CourseWebControllerTest {
 
     @MockBean
     private CourseCategoryBeanService categoryService;
+
+        @MockBean
+        private JwtService jwtService;
 
     @Test
     public void testListHappyPath() throws Exception {
@@ -62,9 +62,9 @@ public class CourseWebControllerTest {
 
         when(courseService.findPage(any(Pageable.class))).thenReturn(page);
 
-        mockMvc.perform(get("/course/list"))
+        mockMvc.perform(get("/admin/courses").with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(view().name("course/list"))
+                .andExpect(view().name("admin/course/list"))
                 .andExpect(model().attributeExists("courses"))
                 .andExpect(model().attribute("currentPage", 0))
                 .andExpect(model().attribute("totalPages", 2))
@@ -77,9 +77,9 @@ public class CourseWebControllerTest {
     public void testDeleteHappyPath() throws Exception {
         doNothing().when(courseService).deleteById(1L);
 
-        mockMvc.perform(post("/course/delete/1").with(csrf()))
+        mockMvc.perform(post("/admin/course/delete/1").with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/course/list"));
+                .andExpect(redirectedUrl("/admin/courses"));
 
         System.out.println("✅ testDeleteHappyPath 通過");
     }
@@ -88,11 +88,11 @@ public class CourseWebControllerTest {
     public void testDeleteBatchHappyPath() throws Exception {
         doNothing().when(courseService).deleteBatch(any());
 
-        mockMvc.perform(post("/course/deleteBatch")
+        mockMvc.perform(post("/admin/course/deleteBatch")
                 .with(csrf())
                         .param("ids", "1", "2", "3"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/course/list"));
+                .andExpect(redirectedUrl("/admin/courses"));
 
         System.out.println("✅ testDeleteBatchHappyPath 通過");
     }
@@ -101,9 +101,9 @@ public class CourseWebControllerTest {
     public void testShowFormHappyPath() throws Exception {
         when(categoryService.findAll()).thenReturn(List.of());
 
-        mockMvc.perform(get("/course/form"))
+        mockMvc.perform(get("/admin/course/form").with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(view().name("course/form"))
+                .andExpect(view().name("admin/course/form"))
                 .andExpect(model().attributeExists("course"))
                 .andExpect(model().attributeExists("categories"));
 
@@ -120,9 +120,9 @@ public class CourseWebControllerTest {
         when(courseService.findById(1L)).thenReturn(course);
         when(categoryService.findAll()).thenReturn(List.of());
 
-        mockMvc.perform(get("/course/edit/1"))
+        mockMvc.perform(get("/admin/course/edit/1").with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(view().name("course/form"))
+                .andExpect(view().name("admin/course/form"))
                 .andExpect(model().attributeExists("course"))
                 .andExpect(model().attributeExists("categories"));
 
@@ -138,12 +138,12 @@ public class CourseWebControllerTest {
 
         when(courseService.save(any())).thenReturn(saved);
 
-        mockMvc.perform(post("/course/save")
+        mockMvc.perform(post("/admin/course/save")
                 .with(csrf())
                         .param("courseName", "課程A")
                         .param("price", "100.0"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/course/list"));
+                .andExpect(redirectedUrl("/admin/courses"));
 
         System.out.println("✅ testSaveHappyPath 通過");
     }

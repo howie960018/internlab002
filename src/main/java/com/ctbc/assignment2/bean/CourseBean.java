@@ -31,6 +31,24 @@ public class CourseBean {
     @PositiveOrZero(message = "價格不可為負數")
     private Double price;
 
+    @Column(length = 500)
+    private String courseSummary;
+
+    @Lob
+    private String courseDescription;
+
+    @Column(length = 512)
+    private String coverImageUrl;
+
+    @Column(length = 120)
+    private String instructorName;
+
+    @PositiveOrZero(message = "課程時數不可為負數")
+    private Integer durationHours;
+
+    @Column(length = 60)
+    private String level;
+
     // @ManyToOne: 定義「多對一」的資料表關聯 (多個課程可以屬於同一個類別)
     // @JoinColumn: 定義關聯的外鍵 (Foreign Key) 欄位名稱設定為 "category_id"
     @ManyToOne
@@ -71,6 +89,24 @@ public class CourseBean {
 
     public CourseCategoryBean getCategory() { return category; }
     public void setCategory(CourseCategoryBean category) { this.category = category; }
+
+    public String getCourseSummary() { return courseSummary; }
+    public void setCourseSummary(String courseSummary) { this.courseSummary = courseSummary; }
+
+    public String getCourseDescription() { return courseDescription; }
+    public void setCourseDescription(String courseDescription) { this.courseDescription = courseDescription; }
+
+    public String getCoverImageUrl() { return coverImageUrl; }
+    public void setCoverImageUrl(String coverImageUrl) { this.coverImageUrl = coverImageUrl; }
+
+    public String getInstructorName() { return instructorName; }
+    public void setInstructorName(String instructorName) { this.instructorName = instructorName; }
+
+    public Integer getDurationHours() { return durationHours; }
+    public void setDurationHours(Integer durationHours) { this.durationHours = durationHours; }
+
+    public String getLevel() { return level; }
+    public void setLevel(String level) { this.level = level; }
 
     public Date getCreatedAt() { return createdAt; }
     public Date getUpdatedAt() { return updatedAt; }

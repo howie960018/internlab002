@@ -5,7 +5,9 @@
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
 </head>
 <body>
-<div class="container mt-4" style="max-width: 680px;">
+<div th:replace="layout :: navbar"></div>
+
+<main class="container py-4" style="max-width: 680px;">
 
     <div class="alert alert-danger">
         <h5 class="alert-heading fw-bold"
@@ -47,13 +49,16 @@
             </li>
             <li class="list-group-item">
                 <span class="badge bg-secondary me-2">網址格式錯誤</span>
-                網址中的 ID 必須為數字（例：/course/edit/5）
+                網址中的 ID 必須為數字（例：/admin/course/edit/5）
             </li>
         </ul>
     </div>
 
-    <a th:href="@{/course/list}" class="btn btn-primary me-2">回到課程列表</a>
-    <a th:href="@{/category/list}" class="btn btn-secondary">回到類別列表</a>
-</div>
+    <a th:href="@{/admin/courses}" class="btn btn-primary me-2">回到課程列表</a>
+    <a th:href="@{/admin/categories}" class="btn btn-secondary">回到類別列表</a>
+</main>
+
+<div th:replace="layout :: footer"></div>
+<script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>

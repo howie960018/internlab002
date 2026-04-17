@@ -58,7 +58,7 @@ public class WebExceptionHandlerTest {
         when(courseService.findById(99999L))
                 .thenThrow(new ResourceNotFoundException("Course not found: 99999"));
 
-        mockMvc.perform(get("/course/edit/99999"))
+        mockMvc.perform(get("/admin/course/edit/99999"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attribute("errorMessage", "Course not found: 99999"));
@@ -71,7 +71,7 @@ public class WebExceptionHandlerTest {
         when(categoryService.findById(99999L))
                 .thenThrow(new ResourceNotFoundException("Category not found: 99999"));
 
-        mockMvc.perform(get("/category/edit/99999"))
+        mockMvc.perform(get("/admin/category/edit/99999"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attribute("errorMessage", "Category not found: 99999"));
@@ -84,7 +84,7 @@ public class WebExceptionHandlerTest {
         doThrow(new ResourceNotFoundException("Course not found: 99999"))
                 .when(courseService).deleteById(99999L);
 
-        mockMvc.perform(post("/course/delete/99999").with(csrf()))
+        mockMvc.perform(post("/admin/course/delete/99999").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attribute("errorMessage", "Course not found: 99999"));
@@ -97,7 +97,7 @@ public class WebExceptionHandlerTest {
         doThrow(new ResourceNotFoundException("Category not found: 99999"))
                 .when(categoryService).deleteById(99999L);
 
-        mockMvc.perform(post("/category/delete/99999").with(csrf()))
+        mockMvc.perform(post("/admin/category/delete/99999").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attribute("errorMessage", "Category not found: 99999"));
@@ -121,13 +121,13 @@ public class WebExceptionHandlerTest {
                 .thenThrow(new DuplicateCourseNameException("課程名稱已存在：Java 基礎"));
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(post("/course/save")
+        mockMvc.perform(post("/admin/course/save")
                         .with(csrf())
                         .param("courseName", "Java 基礎")
                         .param("price", "3000.0"))
                 .andExpect(status().isOk())
                 // 【修正】Controller catch 後 return "course/form"，不走 WebExceptionHandler
-                .andExpect(view().name("course/form"))
+                .andExpect(view().name("admin/course/form"))
                 .andExpect(model().attributeExists("duplicateError"));
 
         System.out.println("✅ testWeb409_新增重複課程名稱_留在表單頁顯示錯誤 通過");
@@ -138,12 +138,12 @@ public class WebExceptionHandlerTest {
         when(categoryService.save(any()))
                 .thenThrow(new DuplicateCourseNameException("類別名稱已存在：Java"));
 
-        mockMvc.perform(post("/category/save")
+        mockMvc.perform(post("/admin/category/save")
                         .with(csrf())
                         .param("categoryName", "Java"))
                 .andExpect(status().isOk())
                 // 【修正】Controller catch 後 return "category/form"，不走 WebExceptionHandler
-                .andExpect(view().name("category/form"))
+                .andExpect(view().name("admin/category/form"))
                 .andExpect(model().attributeExists("duplicateError"));
 
         System.out.println("✅ testWeb409_新增重複類別名稱_留在表單頁顯示錯誤 通過");
@@ -159,7 +159,7 @@ public class WebExceptionHandlerTest {
         when(categoryService.save(any()))
                 .thenThrow(new DataIntegrityViolationException("constraint violation"));
 
-        mockMvc.perform(post("/category/save")
+        mockMvc.perform(post("/admin/category/save")
                         .with(csrf())
                         .param("categoryName", "重複類別"))
                 .andExpect(status().isOk())
@@ -175,7 +175,7 @@ public class WebExceptionHandlerTest {
                 .thenThrow(new DataIntegrityViolationException("constraint violation"));
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(post("/course/save")
+        mockMvc.perform(post("/admin/course/save")
                         .with(csrf())
                         .param("courseName", "測試課程")
                         .param("price", "100.0"))
@@ -192,7 +192,7 @@ public class WebExceptionHandlerTest {
 
     @Test
         public void testWeb400PathVariableTypeMismatchToErrorView() throws Exception {
-        mockMvc.perform(get("/course/edit/abc"))
+        mockMvc.perform(get("/admin/course/edit/abc"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attributeExists("errorMessage"));
@@ -202,7 +202,7 @@ public class WebExceptionHandlerTest {
 
     @Test
         public void testWeb400CategoryPathVariableTypeMismatchToErrorView() throws Exception {
-        mockMvc.perform(get("/category/edit/xyz"))
+        mockMvc.perform(get("/admin/category/edit/xyz"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attributeExists("errorMessage"));
@@ -212,7 +212,7 @@ public class WebExceptionHandlerTest {
 
     @Test
         public void testWeb400DeletePathVariableTypeMismatchToErrorView() throws Exception {
-                mockMvc.perform(post("/course/delete/notANumber").with(csrf()))
+                mockMvc.perform(post("/admin/course/delete/notANumber").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attributeExists("errorMessage"));
@@ -228,23 +228,23 @@ public class WebExceptionHandlerTest {
         public void testWebValidationFailCourseNameBlankStayOnForm() throws Exception {
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(post("/course/save")
+        mockMvc.perform(post("/admin/course/save")
                                                 .with(csrf())
                         .param("courseName", "")
                         .param("price", "100.0"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("course/form"));
+                .andExpect(view().name("admin/course/form"));
 
         System.out.println("✅ testWeb_表單驗証失敗_課程名稱空白_留在表單頁 通過");
     }
 
     @Test
         public void testWebValidationFailCategoryNameBlankStayOnForm() throws Exception {
-        mockMvc.perform(post("/category/save")
+        mockMvc.perform(post("/admin/category/save")
                                                 .with(csrf())
                         .param("categoryName", ""))
                 .andExpect(status().isOk())
-                .andExpect(view().name("category/form"));
+                .andExpect(view().name("admin/category/form"));
 
         System.out.println("✅ testWeb_表單驗証失敗_類別名稱空白_留在表單頁 通過");
     }
@@ -253,12 +253,12 @@ public class WebExceptionHandlerTest {
         public void testWebValidationFailNegativePriceStayOnForm() throws Exception {
         when(categoryService.findAll()).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(post("/course/save")
+        mockMvc.perform(post("/admin/course/save")
                                                 .with(csrf())
                         .param("courseName", "測試課程")
                         .param("price", "-1.0"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("course/form"));
+                .andExpect(view().name("admin/course/form"));
 
         System.out.println("✅ testWeb_表單驗証失敗_價格為負數_留在表單頁 通過");
     }
@@ -272,7 +272,7 @@ public class WebExceptionHandlerTest {
         when(courseService.findPage(any()))
                 .thenThrow(new RuntimeException("資料庫連線失敗"));
 
-        mockMvc.perform(get("/course/list"))
+        mockMvc.perform(get("/admin/courses"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attribute("errorMessage", "系統發生未預期錯誤：資料庫連線失敗"));
@@ -285,7 +285,7 @@ public class WebExceptionHandlerTest {
         when(categoryService.findAll())
                 .thenThrow(new RuntimeException("NullPointerException"));
 
-        mockMvc.perform(get("/category/list"))
+        mockMvc.perform(get("/admin/categories"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
                 .andExpect(model().attribute("errorMessage", "系統發生未預期錯誤：NullPointerException"));
@@ -299,6 +299,11 @@ public class WebExceptionHandlerTest {
 
     @Test
         public void testHomeLoadsSuccessfully() throws Exception {
+        when(courseService.findPage(any()))
+                .thenReturn(org.springframework.data.domain.Page.empty());
+        when(categoryService.findTopLevel())
+                .thenReturn(Collections.emptyList());
+
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("home"));
