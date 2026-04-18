@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chapters</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div th:replace="~{layout :: navbar}"></div>
+
+<main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0" th:text="'Chapters ??' + ${course.courseName}">Chapters</h2>
+        <a class="btn btn-primary" th:href="@{/admin/course/{courseId}/chapter/form(courseId=${courseId})}">Add Chapter</a>
+    </div>
+
+    <div class="text-muted" th:if="${chapters == null || chapters.size() == 0}">
+        No chapters yet.
+    </div>
+
+    <div class="table-responsive" th:if="${chapters != null && chapters.size() > 0}">
+        <table class="table table-bordered align-middle">
+            <thead>
+            <tr>
+                <th>Sort Order</th>
+                <th>Title</th>
+                <th>Video</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="chapter : ${chapters}">
+                <td th:text="${chapter.sortOrder}"></td>
+                <td th:text="${chapter.title}"></td>
+                <td th:text="${chapter.videoPlaceholderUrl != null && !#strings.isEmpty(chapter.videoPlaceholderUrl) ? 'Yes' : 'No'}"></td>
+                <td>
+                    <a class="btn btn-sm btn-outline-primary"
+                       th:href="@{/admin/course/{courseId}/chapter/edit/{id}(courseId=${courseId}, id=${chapter.id})}">Edit</a>
+                </td>
+                <td>
+                    <form th:action="@{/admin/course/{courseId}/chapter/delete/{id}(courseId=${courseId}, id=${chapter.id})}"
+                          method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Delete this chapter?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <a class="btn btn-link px-0" th:href="@{/admin/courses}">Back to Courses</a>
+</main>
+
+<div th:replace="~{layout :: footer}"></div>
+<script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
+
+

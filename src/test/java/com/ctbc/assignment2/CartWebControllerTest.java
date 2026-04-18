@@ -1,40 +1,36 @@
 package com.ctbc.assignment2;
 
 import com.ctbc.assignment2.bean.CartItem;
-import com.ctbc.assignment2.bean.Enrollment;
 import com.ctbc.assignment2.controller.web.CartWebController;
-import com.ctbc.assignment2.exception.DuplicateEnrollmentException;
-import com.ctbc.assignment2.exception.WebExceptionHandler;
+import com.ctbc.assignment2.controller.web.OrderWebController;
 import com.ctbc.assignment2.security.JwtService;
 import com.ctbc.assignment2.service.CartService;
-import com.ctbc.assignment2.service.EnrollmentService;
+import com.ctbc.assignment2.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 
-@WebMvcTest(controllers = {CartWebController.class})
+@WebMvcTest(controllers = {CartWebController.class, OrderWebController.class})
 @AutoConfigureMockMvc(addFilters = false)
-@Import(WebExceptionHandler.class)
 public class CartWebControllerTest {
 
     @Autowired
@@ -44,7 +40,7 @@ public class CartWebControllerTest {
     private CartService cartService;
 
     @MockBean
-    private EnrollmentService enrollmentService;
+    private OrderService orderService;
 
     @MockBean
     private JwtService jwtService;
@@ -96,34 +92,14 @@ public class CartWebControllerTest {
                 new CartItem(2L, "Course B", 200.0)
         );
         when(cartService.getCart(any())).thenReturn(items);
-        when(enrollmentService.enroll(any(), any())).thenReturn(new Enrollment());
+        com.ctbc.assignment2.bean.Order order = new com.ctbc.assignment2.bean.Order();
+        order.setId(5L);
+        when(orderService.createOrder(anyString(), any())).thenReturn(order);
 
         mockMvc.perform(post("/cart/checkout")
                         .with(csrf())
                         .principal(new UsernamePasswordAuthenticationToken("user1", "n/a")))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/my-courses"));
-
-        verify(enrollmentService).enroll("user1", 1L);
-        verify(enrollmentService).enroll("user1", 2L);
-        verify(cartService).clearCart(any());
-    }
-
-    @Test
-    public void testCheckoutDuplicateEnrollmentRedirectsToError() throws Exception {
-        List<CartItem> items = List.of(new CartItem(1L, "Course A", 100.0));
-        when(cartService.getCart(any())).thenReturn(items);
-        when(enrollmentService.enroll(any(), any()))
-                .thenThrow(new DuplicateEnrollmentException("Already enrolled"));
-
-        mockMvc.perform(post("/cart/checkout")
-                        .with(csrf())
-                        .principal(new UsernamePasswordAuthenticationToken("user1", "n/a")))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/error"))
-                .andExpect(flash().attribute("errorTitle", "重複報名"))
-                .andExpect(flash().attribute("errorMessage", "Already enrolled"));
-
-        verify(cartService, never()).clearCart(any());
+            .andExpect(status().isOk())
+            .andExpect(forwardedUrl("/orders/create"));
     }
 }

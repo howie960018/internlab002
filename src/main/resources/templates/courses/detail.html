@@ -20,6 +20,14 @@
         </div>
         <div class="col-md-7">
             <h2 class="mb-2" th:text="${course.courseName}">Course name</h2>
+            <div class="mb-2">
+                <span th:if="${reviewCount > 0}">
+                    &#9733;
+                    <span th:text="${#numbers.formatDecimal(avgRating,1,1)}"></span> / 5
+                    (<span th:text="${reviewCount}"></span> reviews)
+                </span>
+                <span th:if="${reviewCount == 0}" class="text-muted">No reviews yet</span>
+            </div>
             <div class="text-muted mb-2"
                  th:text="${course.category != null ? course.category.categoryName : 'Uncategorized'}"></div>
             <div class="h4 mb-3" th:text="'$' + ${course.price}">$0</div>
@@ -27,7 +35,7 @@
                         <form sec:authorize="hasRole('USER')"
                                     th:action="@{/cart/add/{id}(id=${course.id})}"
                                     method="post" class="mb-3">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                 <button type="submit" class="btn btn-primary">Add to Cart</button>
                         </form>
 
@@ -52,9 +60,89 @@
     <h4>Course description</h4>
     <p th:if="${course.courseDescription != null}" th:text="${course.courseDescription}"></p>
     <p class="text-muted" th:if="${course.courseDescription == null}">No description yet.</p>
+
+    <hr class="my-4">
+
+    <h4 class="mb-3">Course Content</h4>
+    <div class="accordion" id="chapterAccordion">
+        <div class="accordion-item" th:each="chapter, iter : ${chapters}">
+            <h2 class="accordion-header" th:attr="id='chapterHeading' + ${iter.index}">
+                <button class="accordion-button collapsed" type="button"
+                        th:attr="data-bs-toggle='collapse', data-bs-target='#chapterCollapse' + ${iter.index}">
+                    <span th:text="${chapter.title}"></span>
+                </button>
+            </h2>
+            <div class="accordion-collapse collapse"
+                 th:attr="id='chapterCollapse' + ${iter.index}, aria-labelledby='chapterHeading' + ${iter.index}">
+                <div class="accordion-body">
+                    <p th:if="${chapter.description != null}" th:text="${chapter.description}"></p>
+                    <div th:if="${chapter.videoPlaceholderUrl != null and !#strings.isEmpty(chapter.videoPlaceholderUrl)}"
+                         class="ratio ratio-16x9 mb-3">
+                        <iframe th:src="${chapter.videoPlaceholderUrl}" allowfullscreen frameborder="0"></iframe>
+                    </div>
+                    <div th:if="${chapter.videoPlaceholderUrl == null or #strings.isEmpty(chapter.videoPlaceholderUrl)}"
+                         class="d-flex align-items-center justify-content-center text-muted"
+                         style="height:200px; background:#eee;">
+                        Video coming soon
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-muted" th:if="${chapters == null || chapters.size() == 0}">
+        No chapters available yet.
+    </div>
+
+    <hr class="my-4">
+
+    <h4 class="mb-3">Reviews</h4>
+
+    <div th:if="${alreadyReviewed}">
+        <div class="alert alert-secondary">You have already reviewed this course.</div>
+    </div>
+
+    <div th:if="${!alreadyReviewed and isEnrolled}" class="mb-4">
+        <form th:action="@{/courses/{id}/review(id=${course.id})}" method="post">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="mb-3">
+                <label class="form-label">Rating</label>
+                <div class="d-flex gap-3">
+                    <label th:each="score : ${#numbers.sequence(1,5)}" class="form-check-label">
+                        <input class="form-check-input" type="radio" name="rating" th:value="${score}" required>
+                        <span th:text="${score}"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Comment</label>
+                <textarea class="form-control" name="comment" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Review</button>
+        </form>
+    </div>
+
+    <div class="text-muted" th:if="${reviews == null || reviews.size() == 0}">
+        No reviews yet.
+    </div>
+
+    <div class="list-group" th:if="${reviews != null && reviews.size() > 0}">
+        <div class="list-group-item" th:each="review : ${reviews}">
+            <div class="d-flex justify-content-between">
+                <strong th:text="${review.reviewer.username}">Reviewer</strong>
+                <small class="text-muted" th:text="${#dates.format(review.createdAt, 'yyyy-MM-dd')}"></small>
+            </div>
+            <div class="text-warning">
+                <span th:each="star : ${#numbers.sequence(1, review.rating)}">&#9733;</span>
+            </div>
+            <p class="mb-0" th:text="${review.comment}"></p>
+        </div>
+    </div>
 </main>
 
 <div th:replace="~{layout :: footer}"></div>
 <script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>
+
+

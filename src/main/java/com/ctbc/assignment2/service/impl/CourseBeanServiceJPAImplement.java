@@ -5,6 +5,7 @@ import com.ctbc.assignment2.bean.CourseStatus;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
 import com.ctbc.assignment2.exception.ResourceNotFoundException;
 import com.ctbc.assignment2.repository.CourseBeanRepository;
+import com.ctbc.assignment2.repository.CourseSpec;
 import com.ctbc.assignment2.service.CourseBeanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -206,6 +207,12 @@ public class CourseBeanServiceJPAImplement implements CourseBeanService {
                 ids,
                 kw.trim(),
                 pageable);
+    }
+
+    @Override
+    public Page<CourseBean> search(String keyword, Long categoryId, CourseStatus status,
+                                   Double minPrice, Double maxPrice, Pageable pageable) {
+        return repo.findAll(CourseSpec.withFilters(keyword, categoryId, status, minPrice, maxPrice), pageable);
     }
 
     @Transactional

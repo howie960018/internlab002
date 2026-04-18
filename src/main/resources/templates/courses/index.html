@@ -23,12 +23,12 @@
                          th:attr="id='collapse' + ${iter.index}"
                          th:classappend="${selectedCategory != null and (selectedCategory.id == node.category.id or (selectedCategory.parent != null and selectedCategory.parent.id == node.category.id))} ? ' show'">
                         <div class="accordion-body">
-                            <a class="d-block mb-2"
-                               th:href="@{/courses(id=${node.category.id}, q=${query})}">View this category</a>
+                                     <a class="d-block mb-2"
+                                         th:href="@{/courses(id=${node.category.id}, q=${query}, minPrice=${minPrice}, maxPrice=${maxPrice})}">View this category</a>
                             <div th:each="child : ${node.children}">
                                 <a class="d-block ms-2"
                                    th:classappend="${selectedCategoryId != null and selectedCategoryId == child.id} ? ' fw-semibold text-primary'"
-                                   th:href="@{/courses(id=${child.id}, q=${query})}"
+                                              th:href="@{/courses(id=${child.id}, q=${query}, minPrice=${minPrice}, maxPrice=${maxPrice})}"
                                    th:text="'-- ' + ${child.categoryName}"></a>
                             </div>
                         </div>
@@ -41,6 +41,10 @@
             <form class="d-flex gap-2 mb-3" method="get" th:action="@{/courses}">
                 <input type="hidden" name="id" th:if="${selectedCategoryId != null}" th:value="${selectedCategoryId}">
                 <input class="form-control" name="q" placeholder="Search courses" th:value="${query}">
+                <input class="form-control" type="number" name="minPrice" min="0" step="0.01" placeholder="Min price"
+                       th:value="${minPrice}">
+                <input class="form-control" type="number" name="maxPrice" min="0" step="0.01" placeholder="Max price"
+                       th:value="${maxPrice}">
                 <button type="submit" class="btn btn-outline-primary">Search</button>
             </form>
 
@@ -81,13 +85,13 @@
                     <li class="page-item"
                         th:classappend="${totalPages == 0 || currentPage == 0} ? ' disabled'">
                         <a class="page-link"
-                           th:href="@{/courses(id=${selectedCategoryId}, q=${query}, page=0, size=${pageSize})}"
+                              th:href="@{/courses(id=${selectedCategoryId}, q=${query}, minPrice=${minPrice}, maxPrice=${maxPrice}, page=0, size=${pageSize})}"
                            aria-label="First">First</a>
                     </li>
                     <li class="page-item"
                         th:classappend="${totalPages == 0 || currentPage == 0} ? ' disabled'">
                         <a class="page-link"
-                           th:href="@{/courses(id=${selectedCategoryId}, q=${query}, page=${currentPage - 1}, size=${pageSize})}"
+                              th:href="@{/courses(id=${selectedCategoryId}, q=${query}, minPrice=${minPrice}, maxPrice=${maxPrice}, page=${currentPage - 1}, size=${pageSize})}"
                            aria-label="Previous">Previous</a>
                     </li>
                     <li class="page-item disabled">
@@ -97,13 +101,13 @@
                     <li class="page-item"
                         th:classappend="${totalPages == 0 || currentPage + 1 >= totalPages} ? ' disabled'">
                         <a class="page-link"
-                           th:href="@{/courses(id=${selectedCategoryId}, q=${query}, page=${currentPage + 1}, size=${pageSize})}"
+                           th:href="@{/courses(id=${selectedCategoryId}, q=${query}, minPrice=${minPrice}, maxPrice=${maxPrice}, page=${currentPage + 1}, size=${pageSize})}"
                            aria-label="Next">Next</a>
                     </li>
                     <li class="page-item"
                         th:classappend="${totalPages == 0 || currentPage + 1 >= totalPages} ? ' disabled'">
                         <a class="page-link"
-                           th:href="@{/courses(id=${selectedCategoryId}, q=${query}, page=${totalPages - 1}, size=${pageSize})}"
+                           th:href="@{/courses(id=${selectedCategoryId}, q=${query}, minPrice=${minPrice}, maxPrice=${maxPrice}, page=${totalPages - 1}, size=${pageSize})}"
                            aria-label="Last">Last</a>
                     </li>
                 </ul>
@@ -116,3 +120,5 @@
 <script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>
+
+

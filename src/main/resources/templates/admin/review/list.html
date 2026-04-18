@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Reviews</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div th:replace="~{layout :: navbar}"></div>
+
+<main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Course Reviews</h2>
+    </div>
+
+    <div class="text-muted" th:if="${reviews == null || reviews.size() == 0}">
+        No reviews yet.
+    </div>
+
+    <div class="table-responsive" th:if="${reviews != null && reviews.size() > 0}">
+        <table class="table table-bordered align-middle">
+            <thead>
+            <tr>
+                <th>Reviewer</th>
+                <th>Rating</th>
+                <th>Comment</th>
+                <th>Date</th>
+                <th>Delete</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="review : ${reviews}">
+                <td th:text="${review.reviewer.username}"></td>
+                <td th:text="${review.rating}"></td>
+                <td th:text="${review.comment}"></td>
+                <td th:text="${#dates.format(review.createdAt, 'yyyy-MM-dd')}"></td>
+                <td>
+                    <form th:action="@{/admin/review/delete/{id}(id=${review.id})}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <input type="hidden" name="courseId" th:value="${courseId}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Delete this review?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <a class="btn btn-link px-0" th:href="@{/admin/courses}">Back to Courses</a>
+</main>
+
+<div th:replace="~{layout :: footer}"></div>
+<script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
+

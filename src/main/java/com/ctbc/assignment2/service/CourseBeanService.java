@@ -96,6 +96,12 @@ public interface CourseBeanService {
     Page<CourseBean> findPublishedPageByCategoryIdsAndName(List<Long> ids, String kw, Pageable pageable);
 
     /**
+     * 統一搜尋（關鍵字、類別、狀態、價格區間）
+     */
+    Page<CourseBean> search(String keyword, Long categoryId, CourseStatus status,
+                            Double minPrice, Double maxPrice, Pageable pageable);
+
+    /**
      * 更新課程狀態
      */
     CourseBean updateStatus(Long id, CourseStatus status);

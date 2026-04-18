@@ -60,6 +60,8 @@
                 <td>
                     <a th:href="@{/admin/course/edit/{id}(id=${course.id})}"
                        class="btn btn-sm btn-warning">Edit</a>
+                          <a th:href="@{/admin/course/{id}/chapters(id=${course.id})}"
+                              class="btn btn-sm btn-outline-primary">Chapters</a>
                     <button th:if="${course.status == T(com.ctbc.assignment2.bean.CourseStatus).PUBLISHED}"
                             type="submit"
                             class="btn btn-sm btn-outline-dark"
@@ -126,3 +128,5 @@
 <script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>
+
+

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chapter Form</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div th:replace="~{layout :: navbar}"></div>
+
+<main class="container py-4" style="max-width: 720px;">
+    <h2 class="mb-3">Chapter</h2>
+
+    <form th:action="@{/admin/course/{courseId}/chapter/save(courseId=${courseId})}" method="post"
+          th:object="${chapter}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <input type="hidden" th:if="${chapter.id != null}" th:field="*{id}">
+
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input class="form-control" required maxlength="255" th:field="*{title}">
+            <div class="text-danger" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" rows="4" th:field="*{description}"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Sort Order</label>
+            <input class="form-control" type="number" min="0" th:field="*{sortOrder}">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Video Placeholder URL</label>
+                 <input class="form-control" maxlength="512"
+                     placeholder="https://www.youtube.com/embed/..." th:field="*{videoPlaceholderUrl}">
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-outline-secondary" th:href="@{/admin/course/{courseId}/chapters(courseId=${courseId})}">Cancel</a>
+        </div>
+    </form>
+</main>
+
+<div th:replace="~{layout :: footer}"></div>
+<script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
+
+
