@@ -3,6 +3,8 @@ package com.ctbc.assignment2;
 import com.ctbc.assignment2.bean.CartItem;
 import com.ctbc.assignment2.bean.Enrollment;
 import com.ctbc.assignment2.controller.web.CartWebController;
+import com.ctbc.assignment2.exception.DuplicateEnrollmentException;
+import com.ctbc.assignment2.exception.WebExceptionHandler;
 import com.ctbc.assignment2.security.JwtService;
 import com.ctbc.assignment2.service.CartService;
 import com.ctbc.assignment2.service.EnrollmentService;
@@ -11,17 +13,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -29,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = {CartWebController.class})
 @AutoConfigureMockMvc(addFilters = false)
+@Import(WebExceptionHandler.class)
 public class CartWebControllerTest {
 
     @Autowired
@@ -101,5 +107,23 @@ public class CartWebControllerTest {
         verify(enrollmentService).enroll("user1", 1L);
         verify(enrollmentService).enroll("user1", 2L);
         verify(cartService).clearCart(any());
+    }
+
+    @Test
+    public void testCheckoutDuplicateEnrollmentRedirectsToError() throws Exception {
+        List<CartItem> items = List.of(new CartItem(1L, "Course A", 100.0));
+        when(cartService.getCart(any())).thenReturn(items);
+        when(enrollmentService.enroll(any(), any()))
+                .thenThrow(new DuplicateEnrollmentException("Already enrolled"));
+
+        mockMvc.perform(post("/cart/checkout")
+                        .with(csrf())
+                        .principal(new UsernamePasswordAuthenticationToken("user1", "n/a")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/error"))
+                .andExpect(flash().attribute("errorTitle", "重複報名"))
+                .andExpect(flash().attribute("errorMessage", "Already enrolled"));
+
+        verify(cartService, never()).clearCart(any());
     }
 }

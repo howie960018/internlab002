@@ -20,6 +20,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -65,6 +66,34 @@ public class InstructorDashboardControllerTest {
                 .andExpect(model().attribute("publishedCount", 1L));
     }
 
+            @Test
+            public void testDashboardPublishedCountEmptyCourses() throws Exception {
+            when(courseService.findByInstructorName("instructor1"))
+                .thenReturn(List.of());
+
+            mockMvc.perform(get("/instructor/dashboard")
+                    .principal(new UsernamePasswordAuthenticationToken("instructor1", "n/a")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("instructor/dashboard"))
+                .andExpect(model().attribute("publishedCount", 0L));
+            }
+
+            @Test
+            public void testDashboardIgnoresNullStatus() throws Exception {
+            CourseBean nullStatus = new CourseBean();
+            CourseBean published = new CourseBean();
+            published.setStatus(CourseStatus.PUBLISHED);
+
+            when(courseService.findByInstructorName("instructor1"))
+                .thenReturn(List.of(nullStatus, published));
+
+            mockMvc.perform(get("/instructor/dashboard")
+                    .principal(new UsernamePasswordAuthenticationToken("instructor1", "n/a")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("instructor/dashboard"))
+                .andExpect(model().attribute("publishedCount", 1L));
+            }
+
     @Test
     public void testListCourses() throws Exception {
         when(courseService.findByInstructorName("instructor1"))
@@ -101,5 +130,7 @@ public class InstructorDashboardControllerTest {
                         .param("price", "100.0"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/instructor/courses"));
+
+                    verify(courseService).save(any());
     }
 }

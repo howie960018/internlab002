@@ -3,7 +3,10 @@ package com.ctbc.assignment2;
 import com.ctbc.assignment2.controller.web.CategoryWebController;
 import com.ctbc.assignment2.controller.web.CourseWebController;
 import com.ctbc.assignment2.controller.web.HomeWebController;
+import com.ctbc.assignment2.exception.CategoryHierarchyException;
+import com.ctbc.assignment2.exception.CategoryNotEmptyException;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
+import com.ctbc.assignment2.exception.InvalidFileException;
 import com.ctbc.assignment2.exception.ResourceNotFoundException;
 import com.ctbc.assignment2.exception.WebExceptionHandler;
 import com.ctbc.assignment2.security.SecurityConfig;
@@ -17,15 +20,20 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.ui.ExtendedModelMap;
+import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
 
 import java.util.Collections;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 // @WebMvcTest 負責啟動 Controller 層環境，並註冊指定的 Web 控制器，不會完整載入整個 Spring (沒包含 Service 跟 DB 層)
@@ -186,6 +194,34 @@ public class WebExceptionHandlerTest {
         System.out.println("✅ testWeb409_課程DB_constraint違反_導到error頁 通過");
     }
 
+    @Test
+        public void testWeb409CategoryNotEmptyToErrorView() throws Exception {
+        doThrow(new CategoryNotEmptyException("Category has courses"))
+                .when(categoryService).deleteById(1L);
+
+        mockMvc.perform(post("/admin/category/delete/1").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("error"))
+                .andExpect(model().attribute("errorTitle", "類別不可刪除"))
+                .andExpect(model().attribute("errorMessage", "Category has courses"));
+
+        System.out.println("✅ testWeb409_類別不可刪除_導到error頁 通過");
+    }
+
+    @Test
+        public void testWeb409CategoryHierarchyToErrorView() throws Exception {
+        when(categoryService.findAll())
+                .thenThrow(new CategoryHierarchyException("Invalid hierarchy"));
+
+        mockMvc.perform(get("/admin/categories"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("error"))
+                .andExpect(model().attribute("errorTitle", "類別層級錯誤"))
+                .andExpect(model().attribute("errorMessage", "Invalid hierarchy"));
+
+        System.out.println("✅ testWeb409_類別層級錯誤_導到error頁 通過");
+    }
+
     // ════════════════════════════════════════════════════
     //   MethodArgumentTypeMismatchException → error view
     // ════════════════════════════════════════════════════
@@ -219,6 +255,35 @@ public class WebExceptionHandlerTest {
 
         System.out.println("✅ testWeb400_刪除時PathVariable型態不符_導到error頁 通過");
     }
+
+        @Test
+                public void testWebBindExceptionShowsFieldErrors() {
+                WebExceptionHandler handler = new WebExceptionHandler();
+                BindException ex = new BindException(new Object(), "course");
+                ex.addError(new FieldError("course", "courseName", "不可空白"));
+                ExtendedModelMap model = new ExtendedModelMap();
+
+                String view = handler.handleBindException(ex, model);
+
+                assertThat(view).isEqualTo("error");
+                assertThat(model.get("fieldErrors"))
+                                .asList()
+                                .contains("課程名稱：不可空白");
+        }
+
+        @Test
+                public void testWebInvalidFileRedirectsToError() throws Exception {
+                when(courseService.findPage(any()))
+                                .thenThrow(new InvalidFileException("Invalid file"));
+
+                mockMvc.perform(get("/admin/courses"))
+                                .andExpect(status().is3xxRedirection())
+                                .andExpect(redirectedUrl("/error"))
+                                .andExpect(flash().attribute("errorTitle", "檔案格式錯誤"))
+                                .andExpect(flash().attribute("errorMessage", "Invalid file"));
+
+                System.out.println("✅ testWeb_檔案格式錯誤_導到error頁 通過");
+        }
 
     // ════════════════════════════════════════════════════
     //   Bean Validation (BindingResult) → 留在表單頁

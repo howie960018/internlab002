@@ -2,8 +2,12 @@ package com.ctbc.assignment2;
 
 import com.ctbc.assignment2.controller.rest.CategoryBeanRestController;
 import com.ctbc.assignment2.controller.rest.CourseBeanRestController;
+import com.ctbc.assignment2.exception.CategoryHierarchyException;
+import com.ctbc.assignment2.exception.CategoryNotEmptyException;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
+import com.ctbc.assignment2.exception.DuplicateEnrollmentException;
 import com.ctbc.assignment2.exception.GlobalExceptionHandler;
+import com.ctbc.assignment2.exception.InvalidFileException;
 import com.ctbc.assignment2.exception.ResourceNotFoundException;
 import com.ctbc.assignment2.security.SecurityConfig;
 import com.ctbc.assignment2.service.CourseBeanService;
@@ -147,6 +151,60 @@ public class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.message").value("類別名稱已存在：程式設計"));
 
         System.out.println("✅ test409_新增重複類別名稱 通過");
+    }
+
+    @Test
+        public void test409CategoryNotEmpty() throws Exception {
+        org.mockito.Mockito.doThrow(new CategoryNotEmptyException("Category has courses"))
+                .when(categoryService).deleteById(1L);
+
+        mockMvc.perform(delete("/api/category/1"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Category has courses"));
+
+        System.out.println("✅ test409_類別不可刪除 通過");
+    }
+
+    @Test
+        public void test409CategoryHierarchy() throws Exception {
+        when(categoryService.save(any()))
+                .thenThrow(new CategoryHierarchyException("Invalid hierarchy"));
+
+        mockMvc.perform(post("/api/category")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"categoryName\":\"程式設計\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Invalid hierarchy"));
+
+        System.out.println("✅ test409_類別層級錯誤 通過");
+    }
+
+    @Test
+        public void test409DuplicateEnrollment() throws Exception {
+        when(courseService.save(any()))
+                .thenThrow(new DuplicateEnrollmentException("Already enrolled"));
+
+        mockMvc.perform(post("/api/course")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"courseName\":\"測試\",\"price\":100.0}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Already enrolled"));
+
+        System.out.println("✅ test409_重複報名 通過");
+    }
+
+    @Test
+        public void test400InvalidFile() throws Exception {
+        when(courseService.save(any()))
+                .thenThrow(new InvalidFileException("Invalid file"));
+
+        mockMvc.perform(post("/api/course")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"courseName\":\"測試\",\"price\":100.0}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid file"));
+
+        System.out.println("✅ test400_檔案格式錯誤 通過");
     }
 
     // ════════════════════════════════════════════════════
