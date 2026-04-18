@@ -6,6 +6,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -119,6 +120,20 @@ public class WebExceptionHandler {
         model.addAttribute("errorTitle", "系統錯誤");
         model.addAttribute("errorMessage", "系統發生未預期錯誤：" + ex.getMessage());
         return "error";
+    }
+
+    @ExceptionHandler(DuplicateEnrollmentException.class)
+    public String handleDuplicateEnrollment(DuplicateEnrollmentException ex, RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("errorTitle", "重複報名");
+        redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        return "redirect:/error";
+    }
+
+    @ExceptionHandler(InvalidFileException.class)
+    public String handleInvalidFile(InvalidFileException ex, RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("errorTitle", "檔案格式錯誤");
+        redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        return "redirect:/error";
     }
 
     // ── 欄位名稱轉中文 ────────────────────────────────────────────

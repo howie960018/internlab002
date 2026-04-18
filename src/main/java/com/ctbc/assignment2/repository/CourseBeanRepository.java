@@ -1,6 +1,7 @@
 package com.ctbc.assignment2.repository;
 
 import com.ctbc.assignment2.bean.CourseBean;
+import com.ctbc.assignment2.bean.CourseStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -39,4 +40,28 @@ public interface CourseBeanRepository extends JpaRepository<CourseBean, Long> {
             java.util.List<Long> categoryIds,
             String courseName,
             org.springframework.data.domain.Pageable pageable);
+
+            // 依狀態分頁查詢課程
+            org.springframework.data.domain.Page<CourseBean> findByStatus(CourseStatus status,
+                                           org.springframework.data.domain.Pageable pageable);
+
+            // 依狀態與類別集合分頁查詢課程
+            org.springframework.data.domain.Page<CourseBean> findByStatusAndCategoryIdIn(CourseStatus status,
+                                                  java.util.List<Long> categoryIds,
+                                                  org.springframework.data.domain.Pageable pageable);
+
+            // 依狀態與名稱關鍵字分頁查詢課程
+            org.springframework.data.domain.Page<CourseBean> findByStatusAndCourseNameContainingIgnoreCase(CourseStatus status,
+                                                             String courseName,
+                                                             org.springframework.data.domain.Pageable pageable);
+
+            // 依狀態、類別集合與名稱關鍵字分頁查詢課程
+            org.springframework.data.domain.Page<CourseBean> findByStatusAndCategoryIdInAndCourseNameContainingIgnoreCase(
+                CourseStatus status,
+                java.util.List<Long> categoryIds,
+                String courseName,
+                org.springframework.data.domain.Pageable pageable);
+
+            // 依講師名稱查詢課程
+            java.util.List<CourseBean> findByInstructorName(String instructorName);
 }

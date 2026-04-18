@@ -1,9 +1,13 @@
 package com.ctbc.assignment2.controller.web;
 
 import com.ctbc.assignment2.bean.CourseBean;
+import com.ctbc.assignment2.bean.CourseStatus;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
+import com.ctbc.assignment2.exception.InvalidFileException;
 import com.ctbc.assignment2.service.CourseBeanService;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
+import com.ctbc.assignment2.service.EnrollmentService;
+import com.ctbc.assignment2.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,6 +16,9 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Spring MVC 課程網頁控制器 (Web Controller)
@@ -28,6 +35,12 @@ public class CourseWebController {
     @Autowired
     private CourseCategoryBeanService categoryService;
 
+    @Autowired(required = false)
+    private EnrollmentService enrollmentService;
+
+    @Autowired(required = false)
+    private FileStorageService fileStorageService;
+
     /**
      * @GetMapping 表示對應 HTTP 的 GET 請求
      * Model: 提供給 View 顯示的前端資料容器
@@ -37,11 +50,18 @@ public class CourseWebController {
                        @RequestParam(defaultValue = "10") int size,
                        Model model) {
         Page<CourseBean> pageResult = courseService.findPage(PageRequest.of(page, size));
+        Map<Long, Long> enrollmentCounts = new HashMap<>();
+        if (enrollmentService != null) {
+            for (CourseBean course : pageResult.getContent()) {
+                enrollmentCounts.put(course.getId(), enrollmentService.countByCourse(course.getId()));
+            }
+        }
         // addAttribute(Key, Value) 可以在 Thymeleaf 以 ${courses} 取得其內容
         model.addAttribute("courses", pageResult.getContent());
         model.addAttribute("currentPage", pageResult.getNumber());
         model.addAttribute("totalPages", pageResult.getTotalPages());
         model.addAttribute("pageSize", pageResult.getSize());
+        model.addAttribute("enrollmentCounts", enrollmentCounts);
         return "admin/course/list";
     }
 
@@ -65,6 +85,7 @@ public class CourseWebController {
     public String save(@Valid @ModelAttribute("course") CourseBean course,
                        BindingResult bindingResult,
                        @RequestParam(required = false) Long categoryId,
+                       @RequestParam(required = false) MultipartFile coverImage,
                        Model model) {
         if (bindingResult.hasErrors()) {
             // 【修正】BindingResult 有錯時，Thymeleaf th:object="${course}" 需要 model 中有 course
@@ -77,10 +98,29 @@ public class CourseWebController {
                 // 如果有選類別，把類別實體從 Database 撈出來後塞入這筆課程的物件中建立關聯
                 course.setCategory(categoryService.findById(categoryId));
             }
+            if (coverImage != null && !coverImage.isEmpty()) {
+                if (fileStorageService == null) {
+                    throw new InvalidFileException("File storage is not available");
+                }
+                String url = fileStorageService.store(coverImage);
+                course.setCoverImageUrl(url);
+            } else if ((course.getCoverImageUrl() == null || course.getCoverImageUrl().isBlank())
+                    && course.getId() != null) {
+                CourseBean existing = courseService.findById(course.getId());
+                course.setCoverImageUrl(existing.getCoverImageUrl());
+            }
+            if (course.getStatus() == null && course.getId() != null) {
+                CourseBean existing = courseService.findById(course.getId());
+                course.setStatus(existing.getStatus());
+            }
             courseService.save(course);
         } catch (DuplicateCourseNameException e) {
             model.addAttribute("categories", categoryService.findAll());
             model.addAttribute("duplicateError", e.getMessage());
+            return "admin/course/form";
+        } catch (InvalidFileException e) {
+            bindingResult.rejectValue("coverImageUrl", "file.invalid", e.getMessage());
+            model.addAttribute("categories", categoryService.findAll());
             return "admin/course/form";
         }
         // redirect 表示這不是個檔案路徑，而是告訴瀏覽器重新要求 URL 路徑
@@ -99,13 +139,29 @@ public class CourseWebController {
 
     @PostMapping("/course/delete/{id}")
     public String delete(@PathVariable Long id) {
+        if (enrollmentService != null && enrollmentService.countByCourse(id) > 0) {
+            return "redirect:/admin/courses?error=enrolled";
+        }
         courseService.deleteById(id);
         return "redirect:/admin/courses";
     }
 
     @PostMapping("/course/deleteBatch")
     public String deleteBatch(@RequestParam(name = "ids", required = false) java.util.List<Long> ids) {
+        if (ids != null && !ids.isEmpty() && enrollmentService != null) {
+            for (Long id : ids) {
+                if (enrollmentService.countByCourse(id) > 0) {
+                    return "redirect:/admin/courses?error=enrolled";
+                }
+            }
+        }
         courseService.deleteBatch(ids);
+        return "redirect:/admin/courses";
+    }
+
+    @PostMapping("/course/status/{id}")
+    public String updateStatus(@PathVariable Long id, @RequestParam CourseStatus status) {
+        courseService.updateStatus(id, status);
         return "redirect:/admin/courses";
     }
 }

@@ -54,8 +54,7 @@
         </ul>
     </div>
 
-    <a th:href="@{/admin/courses}" class="btn btn-primary me-2">回到課程列表</a>
-    <a th:href="@{/admin/categories}" class="btn btn-secondary">回到類別列表</a>
+    <button type="button" class="btn btn-primary" onclick="history.back()">回到上一頁</button>
 </main>
 
 <div th:replace="layout :: footer"></div>

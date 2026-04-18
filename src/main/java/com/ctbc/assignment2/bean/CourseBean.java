@@ -49,6 +49,10 @@ public class CourseBean {
     @Column(length = 60)
     private String level;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private CourseStatus status = CourseStatus.DRAFT;
+
     // @ManyToOne: 定義「多對一」的資料表關聯 (多個課程可以屬於同一個類別)
     // @JoinColumn: 定義關聯的外鍵 (Foreign Key) 欄位名稱設定為 "category_id"
     @ManyToOne
@@ -107,6 +111,9 @@ public class CourseBean {
 
     public String getLevel() { return level; }
     public void setLevel(String level) { this.level = level; }
+
+    public CourseStatus getStatus() { return status; }
+    public void setStatus(CourseStatus status) { this.status = status; }
 
     public Date getCreatedAt() { return createdAt; }
     public Date getUpdatedAt() { return updatedAt; }

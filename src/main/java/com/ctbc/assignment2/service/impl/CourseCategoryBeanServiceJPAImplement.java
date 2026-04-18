@@ -38,6 +38,11 @@ public class CourseCategoryBeanServiceJPAImplement implements CourseCategoryBean
     }
 
     @Override
+    public long count() {
+        return repo.count();
+    }
+
+    @Override
     public CourseCategoryBean findById(Long id) {
         return repo.findById(id)
                    .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + id));

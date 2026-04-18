@@ -17,8 +17,24 @@
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/courses}">Courses</a>
                 </li>
+                <li class="nav-item" sec:authorize="hasRole('INSTRUCTOR')">
+                    <a class="nav-link" th:href="@{/instructor/dashboard}">Instructor</a>
+                </li>
                 <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link" th:href="@{/admin/dashboard}">Admin Panel</a>
+                </li>
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" th:href="@{/profile}">My Profile</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('USER')">
+                    <a class="nav-link" th:href="@{/my-courses}">My Courses</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('USER')">
+                    <a class="nav-link" th:href="@{/cart}">
+                        Cart
+                        <span class="badge bg-danger ms-1"
+                              th:text="${session.CART != null ? session.CART.size() : 0}">0</span>
+                    </a>
                 </li>
             </ul>
             <div class="d-flex gap-2">

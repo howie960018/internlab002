@@ -18,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -95,6 +96,18 @@ public class SecurityWebTest {
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void instructorRoleCanAccessInstructorDashboard() throws Exception {
+        when(courseService.findByInstructorName("instructor1")).thenReturn(new ArrayList<>());
+
+        mockMvc.perform(get("/instructor/dashboard"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/admin/dashboard"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @WithMockUser(roles = "ADMIN")
     public void csrfIsRequiredForPostWebRoutes() throws Exception {
                 mockMvc.perform(post("/admin/course/save")
@@ -132,7 +145,7 @@ public class SecurityWebTest {
 
         when(categoryService.findTopLevel()).thenReturn(List.of(category));
         when(categoryService.findChildren(1L)).thenReturn(List.of());
-                when(courseService.findPage(any(Pageable.class)))
-                                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+        when(courseService.findPublishedPage(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
     }
 }

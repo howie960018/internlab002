@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>My Courses</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div th:replace="~{layout :: navbar}"></div>
+
+<main class="container py-4">
+    <h2 class="mb-4">My courses</h2>
+
+    <table class="table table-bordered align-middle">
+        <thead>
+            <tr>
+                <th>Course</th>
+                <th>Instructor</th>
+                <th>Enrolled at</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="enrollment : ${enrollments}">
+                <td th:text="${enrollment.course.courseName}"></td>
+                <td th:text="${enrollment.course.instructorName}"></td>
+                <td th:text="${enrollment.enrolledAt}"></td>
+                <td>
+                    <span class="badge bg-success" th:text="${enrollment.status}">ACTIVE</span>
+                </td>
+                <td>
+                    <form th:action="@{/my-courses/cancel/{id}(id=${enrollment.course.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="text-muted" th:if="${enrollments == null || enrollments.size() == 0}">No active enrollments.</div>
+</main>
+
+<div th:replace="~{layout :: footer}"></div>
+<script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

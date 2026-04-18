@@ -18,6 +18,11 @@ public interface CourseCategoryBeanService {
     List<CourseCategoryBean> findAll();
 
     /**
+     * 取得類別總筆數
+     */
+    long count();
+
+    /**
      * 根據 ID 尋找單一課程類別
      */
     CourseCategoryBean findById(Long id);

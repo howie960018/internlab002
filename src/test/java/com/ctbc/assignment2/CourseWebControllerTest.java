@@ -5,6 +5,7 @@ import com.ctbc.assignment2.controller.web.CourseWebController;
 import com.ctbc.assignment2.security.JwtService;
 import com.ctbc.assignment2.service.CourseBeanService;
 import com.ctbc.assignment2.service.CourseCategoryBeanService;
+import com.ctbc.assignment2.service.EnrollmentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -38,6 +39,9 @@ public class CourseWebControllerTest {
 
     @MockBean
     private CourseCategoryBeanService categoryService;
+
+        @MockBean
+        private EnrollmentService enrollmentService;
 
         @MockBean
         private JwtService jwtService;
@@ -76,6 +80,7 @@ public class CourseWebControllerTest {
     @Test
     public void testDeleteHappyPath() throws Exception {
         doNothing().when(courseService).deleteById(1L);
+                when(enrollmentService.countByCourse(1L)).thenReturn(0L);
 
         mockMvc.perform(post("/admin/course/delete/1").with(csrf()))
                 .andExpect(status().is3xxRedirection())
@@ -87,6 +92,9 @@ public class CourseWebControllerTest {
     @Test
     public void testDeleteBatchHappyPath() throws Exception {
         doNothing().when(courseService).deleteBatch(any());
+                when(enrollmentService.countByCourse(1L)).thenReturn(0L);
+                when(enrollmentService.countByCourse(2L)).thenReturn(0L);
+                when(enrollmentService.countByCourse(3L)).thenReturn(0L);
 
         mockMvc.perform(post("/admin/course/deleteBatch")
                 .with(csrf())
@@ -96,6 +104,30 @@ public class CourseWebControllerTest {
 
         System.out.println("✅ testDeleteBatchHappyPath 通過");
     }
+
+        @Test
+        public void testDeleteBlockedWhenEnrolled() throws Exception {
+                when(enrollmentService.countByCourse(1L)).thenReturn(2L);
+
+                mockMvc.perform(post("/admin/course/delete/1").with(csrf()))
+                                .andExpect(status().is3xxRedirection())
+                                .andExpect(redirectedUrl("/admin/courses?error=enrolled"));
+
+                System.out.println("✅ testDeleteBlockedWhenEnrolled 通過");
+        }
+
+        @Test
+        public void testDeleteBatchBlockedWhenEnrolled() throws Exception {
+                when(enrollmentService.countByCourse(2L)).thenReturn(1L);
+
+                mockMvc.perform(post("/admin/course/deleteBatch")
+                                .with(csrf())
+                                                .param("ids", "1", "2", "3"))
+                                .andExpect(status().is3xxRedirection())
+                                .andExpect(redirectedUrl("/admin/courses?error=enrolled"));
+
+                System.out.println("✅ testDeleteBatchBlockedWhenEnrolled 通過");
+        }
 
     @Test
     public void testShowFormHappyPath() throws Exception {

@@ -50,8 +50,11 @@ public class SecurityConfig {
             )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("USER", "ADMIN")
-                        .anyRequest().hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("USER", "ADMIN", "INSTRUCTOR")
+                    .requestMatchers(HttpMethod.POST, "/api/course").hasAnyRole("ADMIN", "INSTRUCTOR")
+                    .requestMatchers(HttpMethod.PUT, "/api/course/**").hasAnyRole("ADMIN", "INSTRUCTOR")
+                    .requestMatchers(HttpMethod.PATCH, "/api/course/**").hasAnyRole("ADMIN", "INSTRUCTOR")
+                    .anyRequest().hasRole("ADMIN")
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -63,6 +66,9 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/home", "/error", "/webjars/**", "/login", "/register").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/instructor/**").hasRole("INSTRUCTOR")
+                        .requestMatchers("/profile/**").authenticated()
+                        .requestMatchers("/my-courses/**").authenticated()
                         .requestMatchers("/courses/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -71,8 +77,12 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             boolean isAdmin = authentication.getAuthorities().stream()
                                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+                            boolean isInstructor = authentication.getAuthorities().stream()
+                                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_INSTRUCTOR"));
                             if (isAdmin) {
                                 response.sendRedirect("/admin/dashboard");
+                            } else if (isInstructor) {
+                                response.sendRedirect("/instructor/dashboard");
                             } else {
                                 response.sendRedirect("/courses");
                             }

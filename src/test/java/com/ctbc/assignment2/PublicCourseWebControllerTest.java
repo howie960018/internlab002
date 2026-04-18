@@ -47,7 +47,7 @@ public class PublicCourseWebControllerTest {
     public void testBrowseAllCourses() throws Exception {
         stubCategoryTree();
         Page<CourseBean> page = new PageImpl<>(List.of(), PageRequest.of(0, 9), 0);
-        when(courseService.findPage(any(Pageable.class))).thenReturn(page);
+        when(courseService.findPublishedPage(any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/courses"))
                 .andExpect(status().isOk())
@@ -56,6 +56,7 @@ public class PublicCourseWebControllerTest {
                 .andExpect(model().attributeExists("courses"))
                 .andExpect(model().attribute("currentPage", 0))
                 .andExpect(model().attribute("totalPages", 0))
+            .andExpect(model().attribute("totalElements", 0L))
                 .andExpect(model().attribute("pageSize", 9));
     }
 
@@ -74,25 +75,27 @@ public class PublicCourseWebControllerTest {
         when(categoryService.findChildren(1L)).thenReturn(List.of(child));
         when(categoryService.findById(1L)).thenReturn(parent);
         Page<CourseBean> page = new PageImpl<>(List.of(), PageRequest.of(0, 9), 0);
-        when(courseService.findPageByCategoryIds(anyList(), any(Pageable.class))).thenReturn(page);
+        when(courseService.findPublishedPageByCategoryIds(anyList(), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/courses").param("id", "1"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("courses/index"))
                 .andExpect(model().attributeExists("selectedCategory"))
-                .andExpect(model().attributeExists("courses"));
+            .andExpect(model().attributeExists("courses"))
+            .andExpect(model().attribute("totalElements", 0L));
     }
 
     @Test
     public void testBrowseByKeyword() throws Exception {
         stubCategoryTree();
         Page<CourseBean> page = new PageImpl<>(List.of(), PageRequest.of(0, 9), 0);
-        when(courseService.findPageByName(anyString(), any(Pageable.class))).thenReturn(page);
+        when(courseService.findPublishedPageByName(anyString(), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/courses").param("q", "java"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("courses/index"))
-                .andExpect(model().attribute("query", "java"));
+            .andExpect(model().attribute("query", "java"))
+            .andExpect(model().attribute("totalElements", 0L));
     }
 
     @Test

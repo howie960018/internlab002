@@ -2,6 +2,7 @@ package com.ctbc.assignment2;
 
 import com.ctbc.assignment2.bean.CourseBean;
 import com.ctbc.assignment2.bean.CourseCategoryBean;
+import com.ctbc.assignment2.bean.CourseStatus;
 import com.ctbc.assignment2.repository.CourseBeanRepository;
 import com.ctbc.assignment2.repository.CourseCategoryBeanRepository;
 import org.junit.jupiter.api.Test;
@@ -141,6 +142,21 @@ public class CourseBeanTest {
         // createdAt 應保持不變
         assertThat(updated.getCreatedAt()).isEqualTo(createdAtBefore);
         System.out.println("✅ testCreatedAt_儲存後不再變動 通過");
+    }
+
+    @Test
+    public void testCourseStatusDefaultDraft() {
+        CourseBean course = new CourseBean();
+        course.setCourseName("狀態測試課程");
+        course.setPrice(100.0);
+        courseRepo.save(course);
+
+        em.flush();
+        em.clear();
+
+        CourseBean found = courseRepo.findById(course.getId()).get();
+        assertThat(found.getStatus()).isEqualTo(CourseStatus.DRAFT);
+        System.out.println("✅ testCourseStatus_default_DRAFT 通過");
     }
 
     // ════════════════════════════════════════════════════

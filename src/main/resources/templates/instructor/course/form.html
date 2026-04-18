@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Instructor - Course Form</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+</head>
+<body>
+<div th:replace="~{layout :: navbar}"></div>
+
+<main class="container py-4" style="max-width: 720px;">
+    <h2 class="mb-3">Course form</h2>
+
+    <div th:if="${duplicateError}" class="alert alert-danger" th:text="${duplicateError}"></div>
+
+    <form th:action="@{/instructor/course/save}" th:object="${course}" method="post" enctype="multipart/form-data">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <input type="hidden" th:field="*{id}">
+
+        <div class="mb-3">
+            <label class="form-label">Course name</label>
+            <input type="text" th:field="*{courseName}"
+                   th:classappend="${#fields.hasErrors('courseName')} ? 'is-invalid'"
+                   class="form-control">
+            <div class="invalid-feedback" th:errors="*{courseName}"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Price</label>
+            <input type="number" th:field="*{price}"
+                   th:classappend="${#fields.hasErrors('price')} ? 'is-invalid'"
+                   class="form-control">
+            <div class="invalid-feedback" th:errors="*{price}"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Course summary</label>
+            <textarea th:field="*{courseSummary}" class="form-control" rows="2"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Course description</label>
+            <textarea th:field="*{courseDescription}" class="form-control" rows="5"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Cover image</label>
+            <input type="file" name="coverImage" accept=".jpg,.jpeg,.png" class="form-control">
+            <div class="text-danger small" th:errors="*{coverImageUrl}"></div>
+            <div class="form-text">Upload a JPG/PNG (max 2MB) or paste a URL below.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Cover image URL</label>
+            <input type="text" th:field="*{coverImageUrl}" class="form-control">
+        </div>
+
+        <div class="mb-3" th:if="${course.coverImageUrl != null}">
+            <label class="form-label">Current image</label>
+            <div>
+                <img th:src="${course.coverImageUrl}" alt="Current cover" class="img-fluid rounded" style="max-height: 200px;">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Instructor</label>
+            <input type="text" th:field="*{instructorName}" class="form-control" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Duration (hours)</label>
+            <input type="number" th:field="*{durationHours}"
+                   th:classappend="${#fields.hasErrors('durationHours')} ? 'is-invalid'"
+                   class="form-control">
+            <div class="invalid-feedback" th:errors="*{durationHours}"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Level</label>
+            <select th:field="*{level}" class="form-select">
+                <option value="">-- Select level --</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Category</label>
+            <select name="categoryId" class="form-select">
+                <option value="">-- Select a category --</option>
+                <option th:each="cat : ${categories}"
+                        th:value="${cat.id}"
+                        th:text="${cat.categoryName}"
+                        th:selected="${course.category != null && course.category.id == cat.id}">
+                </option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save</button>
+        <a th:href="@{/instructor/courses}" class="btn btn-secondary">Cancel</a>
+    </form>
+</main>
+
+<div th:replace="~{layout :: footer}"></div>
+<script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

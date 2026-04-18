@@ -11,6 +11,9 @@ public interface CourseCategoryBeanRepository extends JpaRepository<CourseCatego
     
     // 自動根據方法名稱生成查詢：檢查該類別名稱是否存在
     boolean existsByCategoryName(String categoryName);
+
+    // 依名稱取得類別
+    java.util.Optional<CourseCategoryBean> findByCategoryName(String categoryName);
     
     // 檢查指定的名稱是否存在，且排除目前正在更新的 id (避免自己跟自己比名稱重複)
     boolean existsByCategoryNameAndIdNot(String categoryName, Long id);

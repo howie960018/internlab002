@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <title>Course detail</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
 </head>
 <body>
-<div th:replace="layout :: navbar"></div>
+<div th:replace="~{layout :: navbar}"></div>
 
 <main class="container py-4" style="max-width: 960px;">
     <a class="btn btn-link px-0" th:href="@{/courses}">Back to courses</a>
@@ -23,6 +23,13 @@
             <div class="text-muted mb-2"
                  th:text="${course.category != null ? course.category.categoryName : 'Uncategorized'}"></div>
             <div class="h4 mb-3" th:text="'$' + ${course.price}">$0</div>
+
+                        <form sec:authorize="hasRole('USER')"
+                                    th:action="@{/cart/add/{id}(id=${course.id})}"
+                                    method="post" class="mb-3">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-primary">Add to Cart</button>
+                        </form>
 
             <p class="lead" th:if="${course.courseSummary != null}"
                th:text="${course.courseSummary}"></p>
@@ -47,7 +54,7 @@
     <p class="text-muted" th:if="${course.courseDescription == null}">No description yet.</p>
 </main>
 
-<div th:replace="layout :: footer"></div>
+<div th:replace="~{layout :: footer}"></div>
 <script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>

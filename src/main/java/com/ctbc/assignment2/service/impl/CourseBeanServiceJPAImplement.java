@@ -1,6 +1,7 @@
 package com.ctbc.assignment2.service.impl;
 
 import com.ctbc.assignment2.bean.CourseBean;
+import com.ctbc.assignment2.bean.CourseStatus;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
 import com.ctbc.assignment2.exception.ResourceNotFoundException;
 import com.ctbc.assignment2.repository.CourseBeanRepository;
@@ -43,6 +44,11 @@ public class CourseBeanServiceJPAImplement implements CourseBeanService {
     @Override
     public List<CourseBean> findAll() {
         return repo.findAll();
+    }
+
+    @Override
+    public long count() {
+        return repo.count();
     }
 
     /**
@@ -164,6 +170,58 @@ public class CourseBeanServiceJPAImplement implements CourseBeanService {
             return repo.findByCategoryIdIn(categoryIds, pageable);
         }
         return repo.findByCategoryIdInAndCourseNameContainingIgnoreCase(categoryIds, keyword.trim(), pageable);
+    }
+
+    @Override
+    public Page<CourseBean> findPublishedPage(Pageable pageable) {
+        return repo.findByStatus(CourseStatus.PUBLISHED, pageable);
+    }
+
+    @Override
+    public Page<CourseBean> findPublishedPageByCategoryIds(List<Long> ids, Pageable pageable) {
+        if (ids == null || ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return repo.findByStatusAndCategoryIdIn(CourseStatus.PUBLISHED, ids, pageable);
+    }
+
+    @Override
+    public Page<CourseBean> findPublishedPageByName(String kw, Pageable pageable) {
+        if (kw == null || kw.isBlank()) {
+            return Page.empty(pageable);
+        }
+        return repo.findByStatusAndCourseNameContainingIgnoreCase(CourseStatus.PUBLISHED, kw.trim(), pageable);
+    }
+
+    @Override
+    public Page<CourseBean> findPublishedPageByCategoryIdsAndName(List<Long> ids, String kw, Pageable pageable) {
+        if (ids == null || ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        if (kw == null || kw.isBlank()) {
+            return repo.findByStatusAndCategoryIdIn(CourseStatus.PUBLISHED, ids, pageable);
+        }
+        return repo.findByStatusAndCategoryIdInAndCourseNameContainingIgnoreCase(
+                CourseStatus.PUBLISHED,
+                ids,
+                kw.trim(),
+                pageable);
+    }
+
+    @Transactional
+    @Override
+    public CourseBean updateStatus(Long id, CourseStatus status) {
+        CourseBean course = findById(id);
+        course.setStatus(status);
+        return repo.save(course);
+    }
+
+    @Override
+    public List<CourseBean> findByInstructorName(String instructorName) {
+        if (instructorName == null || instructorName.isBlank()) {
+            return List.of();
+        }
+        return repo.findByInstructorName(instructorName.trim());
     }
 
     private String normalizeName(String name) {

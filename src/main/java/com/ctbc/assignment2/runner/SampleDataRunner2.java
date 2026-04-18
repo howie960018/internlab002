@@ -16,22 +16,22 @@ public class SampleDataRunner2 implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-
-        CourseCategoryBean cat1 = new CourseCategoryBean();
-        cat1.setCategoryName("軟體工程");
-        categoryRepo.save(cat1);
-
-        CourseCategoryBean cat2 = new CourseCategoryBean();
-        cat2.setCategoryName("資料庫");
-        categoryRepo.save(cat2);
-
-        CourseCategoryBean cat3 = new CourseCategoryBean();
-        cat3.setCategoryName("網頁開發");
-        categoryRepo.save(cat3);
+        createCategoryIfMissing("軟體工程");
+        createCategoryIfMissing("資料庫");
+        createCategoryIfMissing("網頁開發");
 
         System.out.println("✅ SampleDataRunner2：類別總數 = " + categoryRepo.count());
         categoryRepo.findAll().forEach(cat ->
             System.out.println("  類別：" + cat.getId() + " / " + cat.getCategoryName())
         );
+    }
+
+    private void createCategoryIfMissing(String name) {
+        if (categoryRepo.existsByCategoryName(name)) {
+            return;
+        }
+        CourseCategoryBean category = new CourseCategoryBean();
+        category.setCategoryName(name);
+        categoryRepo.save(category);
     }
 }

@@ -61,6 +61,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
+    // ── 409：重複報名 ──────────────────────────────────────────
+    @ExceptionHandler(DuplicateEnrollmentException.class)
+    public ResponseEntity<Object> handleDuplicateEnrollment(
+            DuplicateEnrollmentException ex, WebRequest request) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
+    // ── 400：檔案格式錯誤 ─────────────────────────────────────
+    @ExceptionHandler(InvalidFileException.class)
+    public ResponseEntity<Object> handleInvalidFile(
+            InvalidFileException ex, WebRequest request) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
     // ── 409：DB constraint 違反（兜底） ─────────────────────────
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Object> handleDataIntegrity(

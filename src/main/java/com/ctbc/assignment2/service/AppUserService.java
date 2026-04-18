@@ -28,6 +28,10 @@ public class AppUserService implements UserDetailsService {
         return createUser(username, rawPassword, "USER");
     }
 
+    public AppUser registerInstructor(String username, String rawPassword) {
+        return createUser(username, rawPassword, "INSTRUCTOR");
+    }
+
     public AppUser createUser(String username, String rawPassword, String role) {
         AppUser user = new AppUser();
         user.setUsername(username);
@@ -36,10 +40,24 @@ public class AppUserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
+    public AppUser findByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    }
+
+    public boolean changePassword(String username, String currentRaw, String newRaw) {
+        AppUser user = findByUsername(username);
+        if (!passwordEncoder.matches(currentRaw, user.getPassword())) {
+            return false;
+        }
+        user.setPassword(passwordEncoder.encode(newRaw));
+        userRepository.save(user);
+        return true;
+    }
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        AppUser user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+        AppUser user = findByUsername(username);
         return User.withUsername(user.getUsername())
                 .password(user.getPassword())
                 .roles(user.getRole())

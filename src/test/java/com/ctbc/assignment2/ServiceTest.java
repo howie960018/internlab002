@@ -2,6 +2,7 @@ package com.ctbc.assignment2;
 
 import com.ctbc.assignment2.bean.CourseBean;
 import com.ctbc.assignment2.bean.CourseCategoryBean;
+import com.ctbc.assignment2.bean.CourseStatus;
 import com.ctbc.assignment2.exception.CategoryHierarchyException;
 import com.ctbc.assignment2.exception.CategoryNotEmptyException;
 import com.ctbc.assignment2.exception.DuplicateCourseNameException;
@@ -258,6 +259,37 @@ public class ServiceTest {
         saved2.setCategoryName("類別已存在_Upd");
         assertThrows(DuplicateCourseNameException.class, () -> categoryService.save(saved2));
         System.out.println("✅ testUpdateCategory_重複名稱拋例外 通過");
+    }
+
+    @Test
+    public void testUpdateCourseStatus() {
+        CourseBean course = new CourseBean();
+        course.setCourseName("狀態更新測試");
+        course.setPrice(100.0);
+        CourseBean saved = courseService.save(course);
+
+        CourseBean updated = courseService.updateStatus(saved.getId(), CourseStatus.PUBLISHED);
+        assertThat(updated.getStatus()).isEqualTo(CourseStatus.PUBLISHED);
+        System.out.println("✅ testUpdateCourseStatus 通過");
+    }
+
+    @Test
+    public void testFindPublishedPageOnlyReturnsPublished() {
+        CourseBean draft = new CourseBean();
+        draft.setCourseName("Draft course");
+        draft.setPrice(100.0);
+        draft.setStatus(CourseStatus.DRAFT);
+        courseService.save(draft);
+
+        CourseBean published = new CourseBean();
+        published.setCourseName("Published course");
+        published.setPrice(200.0);
+        published.setStatus(CourseStatus.PUBLISHED);
+        courseService.save(published);
+
+        Page<CourseBean> page = courseService.findPublishedPage(PageRequest.of(0, 10));
+        assertThat(page.getContent().stream().allMatch(c -> c.getStatus() == CourseStatus.PUBLISHED)).isTrue();
+        System.out.println("✅ testFindPublishedPageOnlyReturnsPublished 通過");
     }
 
     // ════════════════════════════════════════════════════

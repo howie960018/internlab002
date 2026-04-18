@@ -2,6 +2,7 @@ package com.ctbc.assignment2.runner;
 
 import com.ctbc.assignment2.bean.CourseBean;
 import com.ctbc.assignment2.bean.CourseCategoryBean;
+import com.ctbc.assignment2.bean.CourseStatus;
 import com.ctbc.assignment2.repository.CourseBeanRepository;
 import com.ctbc.assignment2.repository.CourseCategoryBeanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,47 +22,17 @@ public class SampleDataRunner5 implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        CourseCategoryBean arts = new CourseCategoryBean();
-        arts.setCategoryName("藝術");
-        categoryRepo.save(arts);
+        CourseCategoryBean arts = getOrCreateCategory("藝術", null);
+        CourseCategoryBean music = getOrCreateCategory("音樂", arts);
+        CourseCategoryBean painting = getOrCreateCategory("繪畫", arts);
 
-        CourseCategoryBean music = new CourseCategoryBean();
-        music.setCategoryName("音樂");
-        music.setParent(arts);
-        categoryRepo.save(music);
+        CourseCategoryBean tech = getOrCreateCategory("科技", null);
+        CourseCategoryBean programming = getOrCreateCategory("程式設計", tech);
+        CourseCategoryBean data = getOrCreateCategory("資料分析", tech);
 
-        CourseCategoryBean painting = new CourseCategoryBean();
-        painting.setCategoryName("繪畫");
-        painting.setParent(arts);
-        categoryRepo.save(painting);
-
-        CourseCategoryBean tech = new CourseCategoryBean();
-        tech.setCategoryName("科技");
-        categoryRepo.save(tech);
-
-        CourseCategoryBean programming = new CourseCategoryBean();
-        programming.setCategoryName("程式設計");
-        programming.setParent(tech);
-        categoryRepo.save(programming);
-
-        CourseCategoryBean data = new CourseCategoryBean();
-        data.setCategoryName("資料分析");
-        data.setParent(tech);
-        categoryRepo.save(data);
-
-        CourseCategoryBean business = new CourseCategoryBean();
-        business.setCategoryName("商業");
-        categoryRepo.save(business);
-
-        CourseCategoryBean marketing = new CourseCategoryBean();
-        marketing.setCategoryName("行銷");
-        marketing.setParent(business);
-        categoryRepo.save(marketing);
-
-        CourseCategoryBean finance = new CourseCategoryBean();
-        finance.setCategoryName("財務");
-        finance.setParent(business);
-        categoryRepo.save(finance);
+        CourseCategoryBean business = getOrCreateCategory("商業", null);
+        CourseCategoryBean marketing = getOrCreateCategory("行銷", business);
+        CourseCategoryBean finance = getOrCreateCategory("財務", business);
 
         createCourse("古典鋼琴入門", 2200.0, music);
         createCourse("吉他伴奏實戰", 1800.0, music);
@@ -94,11 +65,30 @@ public class SampleDataRunner5 implements CommandLineRunner {
         System.out.println("✅ 已寫入階層類別與課程資料 (Runner 5)");
     }
 
+    private CourseCategoryBean getOrCreateCategory(String name, CourseCategoryBean parent) {
+        CourseCategoryBean existing = categoryRepo.findByCategoryName(name).orElse(null);
+        if (existing != null) {
+            if (parent != null && existing.getParent() == null) {
+                existing.setParent(parent);
+                return categoryRepo.save(existing);
+            }
+            return existing;
+        }
+        CourseCategoryBean category = new CourseCategoryBean();
+        category.setCategoryName(name);
+        category.setParent(parent);
+        return categoryRepo.save(category);
+    }
+
     private void createCourse(String name, Double price, CourseCategoryBean category) {
+        if (courseRepo.existsByCourseName(name)) {
+            return;
+        }
         CourseBean course = new CourseBean();
         course.setCourseName(name);
         course.setPrice(price);
         course.setCategory(category);
+        course.setStatus(CourseStatus.PUBLISHED);
         courseRepo.save(course);
     }
 }

@@ -45,18 +45,18 @@ public class PublicCourseWebController {
             }
 
             if (keyword != null && !keyword.isBlank()) {
-                pageResult = courseService.findPageByCategoryIdsAndName(categoryIds, keyword, PageRequest.of(page, size));
+                pageResult = courseService.findPublishedPageByCategoryIdsAndName(categoryIds, keyword, PageRequest.of(page, size));
             } else {
-                pageResult = courseService.findPageByCategoryIds(categoryIds, PageRequest.of(page, size));
+                pageResult = courseService.findPublishedPageByCategoryIds(categoryIds, PageRequest.of(page, size));
             }
 
             model.addAttribute("selectedCategory", selected);
             model.addAttribute("selectedCategoryId", id);
         } else {
             if (keyword != null && !keyword.isBlank()) {
-                pageResult = courseService.findPageByName(keyword, PageRequest.of(page, size));
+                pageResult = courseService.findPublishedPageByName(keyword, PageRequest.of(page, size));
             } else {
-                pageResult = courseService.findPage(PageRequest.of(page, size));
+                pageResult = courseService.findPublishedPage(PageRequest.of(page, size));
             }
         }
 
@@ -64,6 +64,7 @@ public class PublicCourseWebController {
         model.addAttribute("courses", pageResult.getContent());
         model.addAttribute("currentPage", pageResult.getNumber());
         model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("totalElements", pageResult.getTotalElements());
         model.addAttribute("pageSize", pageResult.getSize());
         return "courses/index";
     }

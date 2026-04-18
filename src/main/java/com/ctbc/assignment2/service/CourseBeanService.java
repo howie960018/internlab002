@@ -1,6 +1,7 @@
 package com.ctbc.assignment2.service;
 
 import com.ctbc.assignment2.bean.CourseBean;
+import com.ctbc.assignment2.bean.CourseStatus;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,11 @@ public interface CourseBeanService {
      * 查詢所有課程
      */
     List<CourseBean> findAll();
+
+    /**
+     * 取得課程總筆數
+     */
+    long count();
 
     /**
      * 根據 ID 尋找單一課程
@@ -68,4 +74,34 @@ public interface CourseBeanService {
      * 依類別集合與名稱關鍵字分頁查詢課程
      */
     Page<CourseBean> findPageByCategoryIdsAndName(List<Long> categoryIds, String keyword, Pageable pageable);
+
+    /**
+     * 依狀態分頁查詢課程
+     */
+    Page<CourseBean> findPublishedPage(Pageable pageable);
+
+    /**
+     * 依狀態與類別集合分頁查詢課程
+     */
+    Page<CourseBean> findPublishedPageByCategoryIds(List<Long> ids, Pageable pageable);
+
+    /**
+     * 依狀態與名稱關鍵字分頁查詢課程
+     */
+    Page<CourseBean> findPublishedPageByName(String kw, Pageable pageable);
+
+    /**
+     * 依狀態、類別集合與名稱關鍵字分頁查詢課程
+     */
+    Page<CourseBean> findPublishedPageByCategoryIdsAndName(List<Long> ids, String kw, Pageable pageable);
+
+    /**
+     * 更新課程狀態
+     */
+    CourseBean updateStatus(Long id, CourseStatus status);
+
+    /**
+     * 依講師名稱查詢課程
+     */
+    List<CourseBean> findByInstructorName(String instructorName);
 }

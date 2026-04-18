@@ -5,12 +5,17 @@
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
 </head>
 <body>
-<div th:replace="layout :: navbar"></div>
+<div th:replace="~{layout :: navbar}"></div>
 
 <main class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">Courses</h2>
         <a th:href="@{/admin/course/form}" class="btn btn-primary">New course</a>
+    </div>
+
+    <div th:if="${param.error != null and param.error[0] == 'enrolled'}"
+         class="alert alert-warning">
+        This course has enrollments and cannot be deleted.
     </div>
 
     <form th:action="@{/admin/course/deleteBatch}" method="post">
@@ -27,6 +32,8 @@
                 <th>Course</th>
                 <th>Price</th>
                 <th>Category</th>
+                <th>Status</th>
+                <th>Enrollments</th>
                 <th>Created</th>
                 <th>Updated</th>
                 <th>Actions</th>
@@ -41,17 +48,40 @@
                 <td th:text="${course.courseName}"></td>
                 <td th:text="${course.price}"></td>
                 <td th:text="${course.category != null ? course.category.categoryName : 'None'}"></td>
+                                <td>
+                                        <span class="badge"
+                                                    th:classappend="${course.status == T(com.ctbc.assignment2.bean.CourseStatus).PUBLISHED} ? ' bg-success' :
+                                                                                     (${course.status == T(com.ctbc.assignment2.bean.CourseStatus).ARCHIVED} ? ' bg-dark' : ' bg-secondary')"
+                                                    th:text="${course.status}">DRAFT</span>
+                                </td>
+                                <td th:text="${enrollmentCounts != null && enrollmentCounts[course.id] != null ? enrollmentCounts[course.id] : 0}"></td>
                 <td th:text="${course.createdAt}"></td>
                 <td th:text="${course.updatedAt}"></td>
                 <td>
                     <a th:href="@{/admin/course/edit/{id}(id=${course.id})}"
                        class="btn btn-sm btn-warning">Edit</a>
-                    <form th:action="@{/admin/course/delete/{id}(id=${course.id})}"
-                          method="post" class="d-inline"
-                          onsubmit="return confirm('Delete this course?')">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                    </form>
+                    <button th:if="${course.status == T(com.ctbc.assignment2.bean.CourseStatus).PUBLISHED}"
+                            type="submit"
+                            class="btn btn-sm btn-outline-dark"
+                            name="status"
+                            value="ARCHIVED"
+                            th:formaction="@{/admin/course/status/{id}(id=${course.id})}">
+                        Archive
+                    </button>
+                    <button th:if="${course.status != T(com.ctbc.assignment2.bean.CourseStatus).PUBLISHED}"
+                            type="submit"
+                            class="btn btn-sm btn-outline-success"
+                            name="status"
+                            value="PUBLISHED"
+                            th:formaction="@{/admin/course/status/{id}(id=${course.id})}">
+                        Publish
+                    </button>
+                    <button type="submit"
+                            class="btn btn-sm btn-danger"
+                            th:formaction="@{/admin/course/delete/{id}(id=${course.id})}"
+                            onclick="return confirm('Delete this course?')">
+                        Delete
+                    </button>
                 </td>
             </tr>
         </tbody>
@@ -92,7 +122,7 @@
     </form>
 </main>
 
-<div th:replace="layout :: footer"></div>
+<div th:replace="~{layout :: footer}"></div>
 <script th:src="@{/webjars/bootstrap/5.2.3/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>
