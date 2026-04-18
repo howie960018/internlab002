@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -99,7 +98,10 @@ public class CartWebControllerTest {
         mockMvc.perform(post("/cart/checkout")
                         .with(csrf())
                         .principal(new UsernamePasswordAuthenticationToken("user1", "n/a")))
-            .andExpect(status().isOk())
-            .andExpect(forwardedUrl("/orders/create"));
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/orders/5"));
+
+        verify(orderService).createOrder(anyString(), any());
+        verify(cartService).clearCart(any());
     }
 }

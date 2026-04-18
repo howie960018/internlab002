@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>?пшкд</title>
+    <title>щМпшкд</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
 </head>
 <body>
@@ -11,50 +11,19 @@
 
     <div class="alert alert-danger">
         <h5 class="alert-heading fw-bold"
-            th:text="${errorTitle} ?: '?╝ч??пшкд'">?╝ч??пшкд</h5>
+            th:text="${errorTitle} ?: 'ч│╗ч╡▒щМпшкд'">ч│╗ч╡▒щМпшкд</h5>
         <hr>
 
-        <!-- ф╕╗ш??пшкдшиКцБп -->
-        <p th:text="${errorMessage}">?пшкдшиКцБп</p>
 
-        <!-- цмДф?щйЧши╝?Оч┤░я╝ИBindException ?Вщбпчд║я? -->
+        <p th:text="${errorMessage}">щМпшкдшиКцБп</p>
+
         <ul th:if="${fieldErrors != null and !#lists.isEmpty(fieldErrors)}" class="mb-0">
             <li th:each="err : ${fieldErrors}" th:text="${err}"></li>
         </ul>
     </div>
 
-    <!-- х╕╕ш??пшкдшккц? -->
-    <div class="card mb-3">
-        <div class="card-header fw-bold">х╕╕ш??пшкд?Ях?шккц?</div>
-        <ul class="list-group list-group-flush">
-            <li class="list-group-item">
-                <span class="badge bg-warning text-dark me-2">?Нчи▒чй║чЩ╜</span>
-                шк▓ч??Нчи▒?Цщ??ех?чи▒чВ║х┐Ехбля╝Мф??пчВ║чй║чЩ╜
-            </li>
-            <li class="list-group-item">
-                <span class="badge bg-warning text-dark me-2">?╣ца╝чй║чЩ╜</span>
-                шк▓ч??╣ца╝?║х?хбля?ф╕НхПп?Щчй║
-            </li>
-            <li class="list-group-item">
-                <span class="badge bg-warning text-dark me-2">?╣ца╝?║ш???/span>
-                шк▓ч??╣ца╝х┐Ещ?хдзцЦ╝?Цч???0
-            </li>
-            <li class="list-group-item">
-                <span class="badge bg-danger me-2">?Нчи▒?Нш?</span>
-                шк▓ч??Нчи▒?Цщ??ех?чи▒х╖▓хнШхЬия╝Мш?ф╜┐чФиф╕Нх??Нчи▒
-            </li>
-            <li class="list-group-item">
-                <span class="badge bg-secondary me-2">?╛ф??░ш?ц║?/span>
-                ?Зх??Дшк▓чиЛц?щбЮхИеф╕Нх??ия??пшГ╜х╖▓швл?кщЩд
-            </li>
-            <li class="list-group-item">
-                <span class="badge bg-secondary me-2">ч╢▓х??╝х??пшкд</span>
-                ч╢▓х?ф╕нч? ID х┐Ещ??║цХ╕хнЧя?ф╛Ля?/admin/course/edit/5я╝?
-            </li>
-        </ul>
-    </div>
 
-    <button type="button" class="btn btn-primary" onclick="history.back()">?ЮхИ░ф╕Кф???/button>
+    <button type="button" class="btn btn-primary" onclick="history.back()">хЫЮхИ░ф╕Кф╕АщаБ</button>
 </main>
 
 <div th:replace="~{layout :: footer}"></div>

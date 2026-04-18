@@ -145,7 +145,7 @@ public class SecurityWebTest {
 
         when(categoryService.findTopLevel()).thenReturn(List.of(category));
         when(categoryService.findChildren(1L)).thenReturn(List.of());
-        when(courseService.findPublishedPage(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+        when(courseService.search(any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 9), 0));
     }
 }
