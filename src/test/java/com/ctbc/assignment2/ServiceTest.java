@@ -15,39 +15,49 @@ import org.springframework.transaction.TransactionSystemException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+
+import java.util.List;
+import java.util.UUID;
+
+
 /**
- * 專門負責測試 Service 層 (業務邏輯層) 的測試類別。
- * 【初學者觀念】：
- *   這裡我們使用 @SpringBootTest 來載入完整的 Spring Application Context (包含 DB 連線與設定)，
- *   因為我們想確實測試 Service 連動 Repository 寫入資料庫的整體真實流程。
- *   和 @DataJpaTest 的差異在於，它不只載入資料庫的設定，連 Service 甚至 Controller 都會載入進來。
+ * Service 層（業務邏輯層）整合測試
+ *
+ * 使用 @SpringBootTest：
+ * - 啟動完整 Spring 容器
+ * - 驗證 Service + Repository + Transaction 的整合行為
+ * - 使用 UUID 作為主鍵（與實際系統一致）
  */
 @SpringBootTest
 public class ServiceTest {
 
-    // 直接請 Spring 注射真實的 Service 實作類別進來 (不是假人 Mock)
     @Autowired
     private CourseBeanService courseService;
 
     @Autowired
     private CourseCategoryBeanService categoryService;
 
-    // ════════════════════════════════════════════════════
-    //   基本 CRUD 測試 (建立、讀取、更新、刪除)
-    // ════════════════════════════════════════════════════
+    // =====================================================
+    // 基本 CRUD 行為
+    // =====================================================
 
+    /**
+     * 測試：儲存分類後，是否可以正確依 ID 查詢回來
+     */
     @Test
     public void testSaveAndFindCategory() {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("Service測試類別");
-        CourseCategoryBean saved = categoryService.save(cat);
 
-        // 呼叫 Service 的 findById 把剛剛存進去的資料撈出來
+        CourseCategoryBean saved = categoryService.save(cat);
         CourseCategoryBean found = categoryService.findById(saved.getId());
-        assertThat(found.getCategoryName()).isEqualTo("Service測試類別"); // 確認拿出來的內容是不是我們期望的
-        System.out.println("✅ testSaveAndFindCategory 通過");
+
+        assertThat(found.getCategoryName()).isEqualTo("Service測試類別");
     }
 
+    /**
+     * 測試：儲存課程後，是否可以正確依 ID 查詢回來
+     */
     @Test
     public void testSaveAndFindCourse() {
         CourseCategoryBean cat = new CourseCategoryBean();
@@ -58,267 +68,374 @@ public class ServiceTest {
         course.setCourseName("Service測試課程");
         course.setPrice(888.0);
         course.setCategory(cat);
-        CourseBean saved = courseService.save(course);
 
+        CourseBean saved = courseService.save(course);
         CourseBean found = courseService.findById(saved.getId());
+
         assertThat(found.getCourseName()).isEqualTo("Service測試課程");
         assertThat(found.getPrice()).isEqualTo(888.0);
-        System.out.println("✅ testSaveAndFindCourse 通過");
     }
 
+    /**
+     * 測試：查詢所有課程
+     */
     @Test
     public void testFindAllCourses() {
-        CourseBean course1 = new CourseBean();
-        course1.setCourseName("課程A");
-        course1.setPrice(100.0);
-        courseService.save(course1);
+        CourseBean c1 = new CourseBean();
+        c1.setCourseName("課程 A");
+        c1.setPrice(100.0);
+        courseService.save(c1);
 
-        CourseBean course2 = new CourseBean();
-        course2.setCourseName("課程B");
-        course2.setPrice(200.0);
-        courseService.save(course2);
+        CourseBean c2 = new CourseBean();
+        c2.setCourseName("課程 B");
+        c2.setPrice(200.0);
+        courseService.save(c2);
 
-        // 至少會查到我們剛剛塞的這 2 筆
-        assertThat(courseService.findAll().size()).isGreaterThanOrEqualTo(2);
-        System.out.println("✅ testFindAllCourses 通過");
+        assertThat(courseService.findAll().size())
+                .isGreaterThanOrEqualTo(2);
     }
 
+    /**
+     * 測試：刪除存在的課程後，再查詢應拋出 ResourceNotFoundException
+     */
     @Test
-    public void testDeleteCourse() {
+    public void testDeleteCourse_ShouldRemoveCourse() {
         CourseBean course = new CourseBean();
         course.setCourseName("待刪除課程");
         course.setPrice(500.0);
+
         CourseBean saved = courseService.save(course);
-        java.util.UUID savedId = saved.getId();
+        UUID id = saved.getId();
 
-        courseService.deleteById(savedId);
+        courseService.deleteById(id);
 
-        // 斷言驗證(assertThrows)：當我們去查一個已經被刪掉的 ID 時，Service 必須要拋出 ResourceNotFoundException！否則測試無法通過。
-        assertThrows(ResourceNotFoundException.class, () -> courseService.findById(savedId));
-        System.out.println("✅ testDeleteCourse 通過");
+        assertThrows(ResourceNotFoundException.class,
+                () -> courseService.findById(id));
     }
 
+    /**
+     * 測試：查詢不存在的課程 ID，應拋出 ResourceNotFoundException
+     */
     @Test
-    public void testFindByIdNotFound() {
-        assertThrows(ResourceNotFoundException.class, () -> courseService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")));
-        System.out.println("✅ testFindByIdNotFound 通過");
+    public void testFindCourseById_NotFound() {
+        assertThrows(ResourceNotFoundException.class,
+                () -> courseService.findById(UUID.randomUUID()));
     }
 
+    /**
+     * 測試：刪除不存在的課程，應拋出 ResourceNotFoundException
+     */
     @Test
-    public void testDeleteNonExistentCourse() {
-        // 刪除一個不存在的 ID 不應該使得系統當機崩潰，所以要使用 assertDoesNotThrow 保證無事發生
-        assertDoesNotThrow(() -> courseService.deleteById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")));
-        System.out.println("✅ testDeleteNonExistentCourse 通過");
+    public void testDeleteNonExistentCourse_ShouldThrowException() {
+        assertThrows(ResourceNotFoundException.class,
+                () -> courseService.deleteById(UUID.randomUUID()));
     }
 
+    /**
+     * 測試：刪除不存在的分類，應拋出 ResourceNotFoundException
+     */
     @Test
-    public void testDeleteNonExistentCategory() {
-        assertDoesNotThrow(() -> categoryService.deleteById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")));
-        System.out.println("✅ testDeleteNonExistentCategory 通過");
+    public void testDeleteNonExistentCategory_ShouldThrowException() {
+        assertThrows(ResourceNotFoundException.class,
+                () -> categoryService.deleteById(UUID.randomUUID()));
     }
 
+    /**
+     * 測試：更新課程資料是否成功
+     */
     @Test
     public void testUpdateCourse() {
         CourseBean course = new CourseBean();
         course.setCourseName("原始名稱");
         course.setPrice(100.0);
-        CourseBean saved = courseService.save(course);
-        java.util.UUID savedId = saved.getId();
 
-        // 把撈出來的物件修改內容後再存進去一次 (Spring Data JPA 會自動判斷這是 Update)
+        CourseBean saved = courseService.save(course);
+        UUID id = saved.getId();
+
         saved.setCourseName("修改後名稱");
         saved.setPrice(999.0);
         courseService.save(saved);
 
-        CourseBean updated = courseService.findById(savedId);
+        CourseBean updated = courseService.findById(id);
+
         assertThat(updated.getCourseName()).isEqualTo("修改後名稱");
         assertThat(updated.getPrice()).isEqualTo(999.0);
-        System.out.println("✅ testUpdateCourse 通過");
     }
 
+    // =====================================================
+    // Category / Course 查詢關聯
+    // =====================================================
+
+    /**
+     * 測試：查詢不存在的分類 ID，應拋出 ResourceNotFoundException
+     */
     @Test
-    public void testFindCategoryByIdNotFound() {
-        assertThrows(ResourceNotFoundException.class, () -> categoryService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")));
-        System.out.println("✅ testFindCategoryByIdNotFound 通過");
+    public void testFindCategoryById_NotFound() {
+        assertThrows(ResourceNotFoundException.class,
+                () -> categoryService.findById(UUID.randomUUID()));
     }
 
+    /**
+     * 測試：查詢所有分類
+     */
     @Test
     public void testFindAllCategories() {
         CourseCategoryBean cat = new CourseCategoryBean();
         cat.setCategoryName("列表測試類別");
         categoryService.save(cat);
 
-        assertThat(categoryService.findAll().size()).isGreaterThanOrEqualTo(1);
-        System.out.println("✅ testFindAllCategories 通過");
+        assertThat(categoryService.findAll().size())
+                .isGreaterThanOrEqualTo(1);
     }
 
-    // ════════════════════════════════════════════════════
-    //   重複名稱檢查（Service 層防呆機制測試）
-    // ════════════════════════════════════════════════════
-
+    /**
+     * 測試：依分類 ID 查詢課程清單
+     */
     @Test
-    public void testDuplicateCourseNameThrows() {
+    public void testFindCoursesByCategoryId() {
+        CourseCategoryBean cat = new CourseCategoryBean();
+        cat.setCategoryName("分類 A");
+        CourseCategoryBean savedCat = categoryService.save(cat);
+
+        CourseBean c1 = new CourseBean();
+        c1.setCourseName("課程 1");
+        c1.setPrice(100.0);
+        c1.setCategory(savedCat);
+        courseService.save(c1);
+
+        CourseBean c2 = new CourseBean();
+        c2.setCourseName("課程 2");
+        c2.setPrice(200.0);
+        c2.setCategory(savedCat);
+        courseService.save(c2);
+
+        List<CourseBean> result =
+                courseService.findByCategoryId(savedCat.getId());
+
+        assertThat(result).hasSize(2);
+    }
+
+    /**
+     * 測試：查詢不存在分類的課程，應拋出 ResourceNotFoundException
+     */
+    @Test
+    public void testFindCoursesByNonExistingCategory_ShouldThrowException() {
+        assertThrows(ResourceNotFoundException.class,
+                () -> courseService.findByCategoryId(UUID.randomUUID()));
+    }
+
+    // =====================================================
+    // 重複名稱檢查（新增 / 更新）
+    // =====================================================
+
+    /**
+     * 測試：新增課程時，名稱重複應拋出 DuplicateCourseNameException
+     */
+    @Test
+    public void testCreateCourseWithDuplicateName_ShouldThrowException() {
         CourseBean c1 = new CourseBean();
         c1.setCourseName("重複課程_Dup");
         c1.setPrice(100.0);
         courseService.save(c1);
 
         CourseBean c2 = new CourseBean();
-        // 設定和上面一模一樣的名稱
         c2.setCourseName("重複課程_Dup");
         c2.setPrice(200.0);
-        // 當儲存第二筆時，Service 應該要幫我們擋下來拋出我們自訂的例外
-        assertThrows(DuplicateCourseNameException.class, () -> courseService.save(c2));
-        System.out.println("✅ testDuplicateCourseNameThrows 通過");
+
+        assertThrows(DuplicateCourseNameException.class,
+                () -> courseService.save(c2));
     }
 
+    /**
+     * 測試：新增分類時，名稱重複應拋出 DuplicateCourseNameException
+     */
     @Test
-    public void testDuplicateCategoryNameThrows() {
+    public void testCreateCategoryWithDuplicateName_ShouldThrowException() {
         CourseCategoryBean cat1 = new CourseCategoryBean();
         cat1.setCategoryName("重複類別_Dup");
         categoryService.save(cat1);
 
         CourseCategoryBean cat2 = new CourseCategoryBean();
         cat2.setCategoryName("重複類別_Dup");
-        assertThrows(DuplicateCourseNameException.class, () -> categoryService.save(cat2));
-        System.out.println("✅ testDuplicateCategoryNameThrows 通過");
+
+        assertThrows(DuplicateCourseNameException.class,
+                () -> categoryService.save(cat2));
     }
 
+    /**
+     * 測試：更新課程但名稱未變，不應拋出例外
+     */
     @Test
-    public void testUpdateCourseWithSameName_NoException() {
-        CourseBean c = new CourseBean();
-        c.setCourseName("同名更新課程_SelfUpdate");
-        c.setPrice(100.0);
-        CourseBean saved = courseService.save(c);
+    public void testUpdateCourseWithSameName_ShouldNotThrowException() {
+        CourseBean course = new CourseBean();
+        course.setCourseName("同名更新課程");
+        course.setPrice(100.0);
 
-        // 如果我只是更新價錢，並沒有亂改名稱，這種「跟自己同名」不應該被當作重複名稱擋下來！
+        CourseBean saved = courseService.save(course);
         saved.setPrice(300.0);
+
         assertDoesNotThrow(() -> courseService.save(saved));
-        System.out.println("✅ testUpdateCourseWithSameName_NoException 通過");
     }
 
+    /**
+     * 測試：更新分類名稱是否成功
+     */
     @Test
     public void testUpdateCategoryName() {
         CourseCategoryBean cat = new CourseCategoryBean();
-        cat.setCategoryName("原始類別名_Update");
+        cat.setCategoryName("原始類別名");
         CourseCategoryBean saved = categoryService.save(cat);
 
-        saved.setCategoryName("更新後類別名_Update");
+        saved.setCategoryName("更新後類別名");
         categoryService.save(saved);
 
-        CourseCategoryBean updated = categoryService.findById(saved.getId());
-        assertThat(updated.getCategoryName()).isEqualTo("更新後類別名_Update");
-        System.out.println("✅ testUpdateCategoryName 通過");
+        CourseCategoryBean updated =
+                categoryService.findById(saved.getId());
+
+        assertThat(updated.getCategoryName())
+                .isEqualTo("更新後類別名");
     }
 
+    /**
+     * 測試：更新分類但名稱相同，不應拋出例外
+     */
     @Test
-    public void testUpdateCategoryWithSameName_NoException() {
+    public void testUpdateCategoryWithSameName_ShouldNotThrowException() {
         CourseCategoryBean cat = new CourseCategoryBean();
-        cat.setCategoryName("類別自身更新_SelfUpdate");
+        cat.setCategoryName("類別自身更新");
         CourseCategoryBean saved = categoryService.save(cat);
 
         assertDoesNotThrow(() -> categoryService.save(saved));
-        System.out.println("✅ testUpdateCategoryWithSameName_NoException 通過");
     }
 
+    /**
+     * 測試：更新課程為已存在的名稱，應拋出 DuplicateCourseNameException
+     */
     @Test
-    public void testUpdateCourse_重複名稱拋例外() {
+    public void testUpdateCourseWithDuplicateName_ShouldThrowException() {
         CourseBean c1 = new CourseBean();
-        c1.setCourseName("課程名稱_已存在_Upd");
+        c1.setCourseName("已存在名稱");
         c1.setPrice(100.0);
         courseService.save(c1);
 
         CourseBean c2 = new CourseBean();
-        c2.setCourseName("課程名稱_要更新_Upd");
+        c2.setCourseName("要更新名稱");
         c2.setPrice(200.0);
         CourseBean saved2 = courseService.save(c2);
 
-        saved2.setCourseName("課程名稱_已存在_Upd");
-        assertThrows(DuplicateCourseNameException.class, () -> courseService.save(saved2));
-        System.out.println("✅ testUpdateCourse_重複名稱拋例外 通過");
+        saved2.setCourseName("已存在名稱");
+
+        assertThrows(DuplicateCourseNameException.class,
+                () -> courseService.save(saved2));
     }
 
+    /**
+     * 測試：更新分類為已存在名稱，應拋出 DuplicateCourseNameException
+     */
     @Test
-    public void testUpdateCategory_重複名稱拋例外() {
+    public void testUpdateCategoryWithDuplicateName_ShouldThrowException() {
         CourseCategoryBean cat1 = new CourseCategoryBean();
-        cat1.setCategoryName("類別已存在_Upd");
+        cat1.setCategoryName("類別已存在");
         categoryService.save(cat1);
 
         CourseCategoryBean cat2 = new CourseCategoryBean();
-        cat2.setCategoryName("類別要更新_Upd");
+        cat2.setCategoryName("類別要更新");
         CourseCategoryBean saved2 = categoryService.save(cat2);
 
-        saved2.setCategoryName("類別已存在_Upd");
-        assertThrows(DuplicateCourseNameException.class, () -> categoryService.save(saved2));
-        System.out.println("✅ testUpdateCategory_重複名稱拋例外 通過");
+        saved2.setCategoryName("類別已存在");
+
+        assertThrows(DuplicateCourseNameException.class,
+                () -> categoryService.save(saved2));
     }
 
-    // ════════════════════════════════════════════════════
-    //   邊界值
-    //
-    //   【修正說明】
-    //   Spring Boot 預設會在 JPA persist/update 時執行 Bean Validation（javax/jakarta 整合）。
-    //   因此即使繞過 Controller，@NotBlank / @PositiveOrZero 也會在 persist 時觸發。
-    //   原本預期「Service 層可存入空白/負數」是錯的：
-    //     - 空白 categoryName → ConstraintViolationException
-    //     - 負數 price        → ConstraintViolationException
-    //
-    //   修正：這兩個測試改為「驗証 JPA Bean Validation 確實有在 persist 時運作」。
-    //   若要真正繞過，需在 application.properties 加入：
-    //     spring.jpa.properties.javax.persistence.validation.mode=none
-    //   但這會影響整體行為，不建議。
-    // ════════════════════════════════════════════════════
+    // =====================================================
+    // Bean Validation / 邊界值
+    // =====================================================
 
+    /**
+     * 測試：分類名稱為空白時，觸發 JPA Validation 失敗
+     */
     @Test
-    public void testSaveCategoryWithEmptyName_JPA_Validation觸發() {
-        // 【修正】JPA persist 時 @NotBlank 仍會觸發，應預期 ConstraintViolationException
+    public void testSaveCategoryWithEmptyName_ShouldTriggerValidation() {
         CourseCategoryBean cat = new CourseCategoryBean();
-        cat.setCategoryName("  ");
+        cat.setCategoryName(" ");
 
-        TransactionSystemException ex = assertThrows(
-                TransactionSystemException.class,
+        assertThrows(
+                org.springframework.transaction.TransactionSystemException.class,
                 () -> categoryService.save(cat)
         );
-        assertThat(ex.getRootCause()).isInstanceOf(ConstraintViolationException.class);
-        System.out.println("✅ testSaveCategoryWithEmptyName_JPA_Validation觸發 通過");
     }
 
+    /**
+     * 測試：課程價格為負數時，觸發 JPA Validation 失敗
+     */
     @Test
-    public void testSaveCourseWithNegativePrice_JPA_Validation觸發() {
-        // 【修正】JPA persist 時 @PositiveOrZero 仍會觸發，應預期 ConstraintViolationException
+    public void testSaveCourseWithNegativePrice_ShouldTriggerValidation() {
         CourseBean course = new CourseBean();
-        course.setCourseName("負價格課程_Bypass");
-        course.setPrice(-100.0);
+        course.setCourseName("負價格課程");
+        course.setPrice(-1.0);
 
-        TransactionSystemException ex = assertThrows(
-                TransactionSystemException.class,
+        assertThrows(
+                org.springframework.transaction.TransactionSystemException.class,
                 () -> courseService.save(course)
         );
-        assertThat(ex.getRootCause()).isInstanceOf(ConstraintViolationException.class);
-        System.out.println("✅ testSaveCourseWithNegativePrice_JPA_Validation觸發 通過");
     }
 
+    /**
+     * 測試：課程價格為 0（合法邊界值）
+     */
     @Test
-    public void testSaveCourseWithZeroPrice_合法邊界值() {
-        // price = 0 符合 @PositiveOrZero，應成功存入
+    public void testSaveCourseWithZeroPrice_ShouldBeAllowed() {
         CourseBean course = new CourseBean();
-        course.setCourseName("零元課程_Zero");
+        course.setCourseName("零元課程");
         course.setPrice(0.0);
+
         CourseBean saved = courseService.save(course);
 
-        assertThat(courseService.findById(saved.getId()).getPrice()).isEqualTo(0.0);
-        System.out.println("✅ testSaveCourseWithZeroPrice_合法邊界值 通過");
+        assertThat(courseService.findById(saved.getId()).getPrice())
+                .isEqualTo(0.0);
     }
 
+    /**
+     * 測試：儲存沒有分類的課程（category 為 null）
+     */
     @Test
-    public void testSaveCourse_無類別_categoryNull() {
+    public void testSaveCourseWithoutCategory_ShouldAllowNull() {
         CourseBean course = new CourseBean();
-        course.setCourseName("無類別Service課程");
+        course.setCourseName("無類別課程");
         course.setPrice(200.0);
-        CourseBean saved = courseService.save(course);
 
+        CourseBean saved = courseService.save(course);
         CourseBean found = courseService.findById(saved.getId());
+
         assertThat(found.getCategory()).isNull();
-        System.out.println("✅ testSaveCourse_無類別_categoryNull 通過");
+    }
+
+    /**
+     * 測試：刪除分類時，底下課程仍保留，且其 category 會被設為 null
+     */
+    @Test
+    public void testDeleteCategory_ShouldKeepCoursesAndSetCategoryNull() {
+        CourseCategoryBean cat = new CourseCategoryBean();
+        cat.setCategoryName("將被刪除的類別");
+        CourseCategoryBean savedCat = categoryService.save(cat);
+
+        CourseBean course = new CourseBean();
+        course.setCourseName("分類下的課程");
+        course.setPrice(123.0);
+        course.setCategory(savedCat);
+        CourseBean savedCourse = courseService.save(course);
+
+        UUID courseId = savedCourse.getId();
+        UUID categoryId = savedCat.getId();
+
+        categoryService.deleteById(categoryId);
+
+        CourseBean foundCourse = courseService.findById(courseId);
+        assertNotNull(foundCourse);
+        assertNull(foundCourse.getCategory());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> categoryService.findById(categoryId));
     }
 }

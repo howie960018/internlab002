@@ -23,3 +23,6 @@ public interface CourseCategoryBeanService {
     // 根據分類的 ID 刪除特定的分類
     void deleteById(UUID id);
 }
+
+
+

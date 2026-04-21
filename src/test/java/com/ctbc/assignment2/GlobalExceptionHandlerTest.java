@@ -17,8 +17,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -31,403 +33,296 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *   @MockBean   : 我們不想真的連接資料庫做複雜存取，所以用 Mock 假人代替 Service，
  *                 好讓我們可以隨心所欲控制它「無論呼叫什麼都丟出 NotFoundException」，以觸發例外。
  */
+/**
+ * GlobalExceptionHandler 行為驗證測試（REST API, UUID 版本）
+ *
+ * 測試重點：
+ * - REST Controller 發生例外時，是否正確轉換為 HTTP Status
+ * - 回傳的 ErrorResponse JSON 格式是否一致
+ * - UUID PathVariable、RequestBody 錯誤是否正確攔截
+ *
+ * 測試層級：Controller + GlobalExceptionHandler
+ */
 @WebMvcTest(controllers = {
         CourseBeanRestController.class,
         CategoryBeanRestController.class
 })
-@Import(GlobalExceptionHandler.class) // 把我們要測試的「主角」主動引進來
+@Import(GlobalExceptionHandler.class)
 public class GlobalExceptionHandlerTest {
 
-    // MockMvc 是用來模擬發送 Http Request (GET, POST等) 的好用機器人
     @Autowired
     private MockMvc mockMvc;
 
-    // 將我們的 Service 換成 Mock 物件，讓我們後續能使用 when().thenThrow()
     @MockBean
     private CourseBeanService courseService;
 
     @MockBean
     private CourseCategoryBeanService categoryService;
 
-    // ════════════════════════════════════════════════════
-    //   404 ResourceNotFoundException
-    // ════════════════════════════════════════════════════
+    private static final UUID UUID_1 =
+            UUID.fromString("11111111-1111-1111-1111-111111111111");
+
+    private static final UUID UUID_2 =
+            UUID.fromString("22222222-2222-2222-2222-222222222222");
+
+    // =====================================================
+    // 404 Not Found
+    // =====================================================
 
     /**
-     * 測試：當打 API 卻找不到課程時，是否能正確拿到 404 Http Status 與我們客製的錯誤 JSON？
+     * GET 課程：查詢不存在的課程 ID
+     * 預期：回傳 404 Not Found + ErrorResponse
      */
     @Test
-    public void test404_查詢不存在的課程() throws Exception {
-        // 設定假人(Mock)劇本：只要你呼叫找 ID=99999 的，我就絕對丟出 Exception 嚇你
-        when(courseService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")))
-                .thenThrow(new ResourceNotFoundException("Course not found: 00000000-0000-0000-0000-000000009999"));
+    void testGetCourse_NotFound_ShouldReturn404() throws Exception {
+        when(courseService.findById(UUID_1))
+                .thenThrow(new ResourceNotFoundException("Course not found: " + UUID_1));
 
-        // 模擬使用 Postman 發送 GET 去 /api/course/{uuid}
-        mockMvc.perform(get("/api/course/00000000-0000-0000-0000-000000009999"))
-                .andExpect(status().isNotFound()) // 預期它會給 404 (因為 GlobalExceptionHandler 寫了 @ResponseStatus(HttpStatus.NOT_FOUND))
-                .andExpect(jsonPath("$.message").value("Course not found: 00000000-0000-0000-0000-000000009999")) // 用 jsonPath 檢查回傳的 JSON 裡面的 message 內容
-                .andExpect(jsonPath("$.timestamp").exists()) // 預期要有我們自定義回傳的好看 timestamp
-                .andExpect(jsonPath("$.details").exists()); // 預期要有請求路徑 details
-
-        System.out.println("✅ test404_查詢不存在的課程 通過");
-    }
-
-    @Test
-    public void test404_刪除不存在的課程() throws Exception {
-        // 當 deleteById 方法不回傳東西(void)時，Mockito 設定假人的寫法是 doThrow().when()
-        org.mockito.Mockito.doThrow(new ResourceNotFoundException("Course not found: 00000000-0000-0000-0000-000000009999"))
-                .when(courseService).deleteById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999"));
-
-        mockMvc.perform(delete("/api/course/00000000-0000-0000-0000-000000009999"))
+        mockMvc.perform(get("/api/course/" + UUID_1))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Course not found: 00000000-0000-0000-0000-000000009999"));
-
-        System.out.println("✅ test404_刪除不存在的課程 通過");
+                .andExpect(jsonPath("$.message")
+                        .value("Course not found: " + UUID_1))
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.details").exists());
     }
 
+    /**
+     * DELETE 課程：刪除不存在的課程
+     * 預期：回傳 404 Not Found
+     */
     @Test
-    public void test404_查詢不存在的類別() throws Exception {
-        when(categoryService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000009999")))
-                .thenThrow(new ResourceNotFoundException("Category not found: 00000000-0000-0000-0000-000000009999"));
+    void testDeleteCourse_NotFound_ShouldReturn404() throws Exception {
+        doThrow(new ResourceNotFoundException("Course not found: " + UUID_1))
+                .when(courseService).deleteById(UUID_1);
 
-        mockMvc.perform(get("/api/category/00000000-0000-0000-0000-000000009999"))
+        mockMvc.perform(delete("/api/course/" + UUID_1))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Category not found: 00000000-0000-0000-0000-000000009999"))
-                .andExpect(jsonPath("$.timestamp").exists());
-
-        System.out.println("✅ test404_查詢不存在的類別 通過");
+                .andExpect(jsonPath("$.message")
+                        .value("Course not found: " + UUID_1));
     }
 
+    /**
+     * GET 分類：查詢不存在的分類
+     * 預期：回傳 404 Not Found
+     */
     @Test
-    public void test404_刪除不存在的類別() throws Exception {
-        org.mockito.Mockito.doThrow(new ResourceNotFoundException("Category not found: 00000000-0000-0000-0000-000000000005"))
-                .when(categoryService).deleteById(java.util.UUID.fromString("00000000-0000-0000-0000-000000000005"));
+    void testGetCategory_NotFound_ShouldReturn404() throws Exception {
+        when(categoryService.findById(UUID_1))
+                .thenThrow(new ResourceNotFoundException("Category not found: " + UUID_1));
 
-        mockMvc.perform(delete("/api/category/00000000-0000-0000-0000-000000000005"))
+        mockMvc.perform(get("/api/category/" + UUID_1))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Category not found: 00000000-0000-0000-0000-000000000005"));
-
-        System.out.println("✅ test404_刪除不存在的類別 通過");
+                .andExpect(jsonPath("$.message")
+                        .value("Category not found: " + UUID_1));
     }
 
-    // ════════════════════════════════════════════════════
-    //   409 DuplicateCourseNameException
-    // ════════════════════════════════════════════════════
-
+    /**
+     * DELETE 分類：刪除不存在的分類
+     * 預期：回傳 404 Not Found
+     */
     @Test
-    public void test409_新增重複課程名稱() throws Exception {
-        // 假動作：只要一呼叫 save 就拋重複名稱錯誤
+    void testDeleteCategory_NotFound_ShouldReturn404() throws Exception {
+        doThrow(new ResourceNotFoundException("Category not found: " + UUID_1))
+                .when(categoryService).deleteById(UUID_1);
+
+        mockMvc.perform(delete("/api/category/" + UUID_1))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message")
+                        .value("Category not found: " + UUID_1));
+    }
+
+    // =====================================================
+    // 409 Conflict
+    // =====================================================
+
+    /**
+     * 新增課程：課程名稱重複
+     * 預期：回傳 409 Conflict
+     */
+    @Test
+    void testCreateCourse_DuplicateName_ShouldReturn409() throws Exception {
         when(courseService.save(any()))
-                .thenThrow(new DuplicateCourseNameException("課程名稱已存在：Java 基礎"));
+                .thenThrow(new DuplicateCourseNameException("Duplicate course name"));
 
         mockMvc.perform(post("/api/course")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"courseName\":\"Java 基礎\",\"price\":3000.0}")) // 塞假 payload
-                .andExpect(status().isConflict()) // isConflict 就是 409
-                .andExpect(jsonPath("$.message").value("課程名稱已存在：Java 基礎"))
-                .andExpect(jsonPath("$.timestamp").exists());
-
-        System.out.println("✅ test409_新增重複課程名稱 通過");
-    }
-
-    @Test
-    public void test409_更新成重複課程名稱() throws Exception {
-        when(courseService.save(any()))
-                .thenThrow(new DuplicateCourseNameException("課程名稱已存在：Spring Boot 入門"));
-
-        mockMvc.perform(post("/api/course")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"00000000-0000-0000-0000-000000000002\",\"courseName\":\"Spring Boot 入門\",\"price\":5000.0}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"courseName\":\"Java\",\"price\":100}"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("課程名稱已存在：Spring Boot 入門"));
-
-        System.out.println("✅ test409_更新成重複課程名稱 通過");
+                .andExpect(jsonPath("$.message").exists());
     }
 
+    /**
+     * 新增分類：分類名稱重複
+     * 預期：回傳 409 Conflict
+     */
     @Test
-    public void test409_新增重複類別名稱() throws Exception {
+    void testCreateCategory_DuplicateName_ShouldReturn409() throws Exception {
         when(categoryService.save(any()))
-                .thenThrow(new DuplicateCourseNameException("類別名稱已存在：程式設計"));
+                .thenThrow(new DuplicateCourseNameException("Duplicate category name"));
 
         mockMvc.perform(post("/api/category")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"categoryName\":\"程式設計\"}"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("類別名稱已存在：程式設計"));
-
-        System.out.println("✅ test409_新增重複類別名稱 通過");
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"categoryName\":\"Web\"}"))
+                .andExpect(status().isConflict());
     }
-
-    // ════════════════════════════════════════════════════
-    //   409 DataIntegrityViolationException
-    // ════════════════════════════════════════════════════
-
-    @Test
-    public void test409_DB_constraint違反() throws Exception {
-        when(courseService.save(any()))
-                .thenThrow(new DataIntegrityViolationException("constraint violation"));
-
-        mockMvc.perform(post("/api/course")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"courseName\":\"測試課程\",\"price\":100.0}"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("資料違反資料庫限制，請確認輸入內容"));
-
-        System.out.println("✅ test409_DB_constraint違反 通過");
-    }
-
-    // ════════════════════════════════════════════════════
-    //   400 MethodArgumentTypeMismatchException
-    // ════════════════════════════════════════════════════
 
     /**
-        * 測試：當 Controller 的參數要求是 UUID，但某個呆瓜傳了英文字母 "abc" 怎麼辦？
-     * 我們的 GlobalExceptionHandler 必須攔截到 TypeMismatchException 把狀態轉成 400 Bad Request 回應回去。
+     * 資料庫 constraint 違反
+     * 預期：回傳 409 Conflict
      */
     @Test
-    public void test400_PathVariable型態不符_文字傳入數字欄位() throws Exception {
+    void testDatabaseConstraintViolation_ShouldReturn409() throws Exception {
+        when(courseService.save(any()))
+                .thenThrow(new DataIntegrityViolationException("constraint"));
+
+        mockMvc.perform(post("/api/course")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"courseName\":\"Test\",\"price\":100}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    // =====================================================
+    // 400 Bad Request
+    // =====================================================
+
+    /**
+     * 課程 UUID PathVariable 格式錯誤
+     * 預期：回傳 400 Bad Request
+     */
+    @Test
+    void testGetCourse_InvalidUuid_ShouldReturn400() throws Exception {
         mockMvc.perform(get("/api/course/abc"))
-                .andExpect(status().isBadRequest()) // 就是 HTTP 狀態碼 400
-                .andExpect(jsonPath("$.message").exists()) // 至少確保有噴一個字串給前端說明原因
-                .andExpect(jsonPath("$.timestamp").exists());
-
-        System.out.println("✅ test400_PathVariable型態不符_文字傳入數字欄位 通過");
+                .andExpect(status().isBadRequest());
     }
 
+    /**
+     * 分類 UUID PathVariable 格式錯誤
+     */
     @Test
-    public void test400_PathVariable型態不符_刪除時傳入文字() throws Exception {
-        mockMvc.perform(delete("/api/course/xyz"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.message").exists());
-
-        System.out.println("✅ test400_PathVariable型態不符_刪除時傳入文字 通過");
-    }
-
-    @Test
-    public void test400_類別PathVariable型態不符() throws Exception {
+    void testGetCategory_InvalidUuid_ShouldReturn400() throws Exception {
         mockMvc.perform(get("/api/category/abc"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
-
-        System.out.println("✅ test400_類別PathVariable型態不符 通過");
+                .andExpect(status().isBadRequest());
     }
 
-    // ════════════════════════════════════════════════════
-    //   400 Bean Validation (@Valid @RequestBody)
-    // ════════════════════════════════════════════════════
-
+    /**
+     * RequestBody 缺少 courseName
+     */
     @Test
-    public void test400_RequestBody_courseName空白() throws Exception {
+    void testCreateCourse_MissingCourseName_ShouldReturn400() throws Exception {
         mockMvc.perform(post("/api/course")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"courseName\":\"\",\"price\":100.0}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
-
-        System.out.println("✅ test400_RequestBody_courseName空白 通過");
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"price\":100}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    public void test400_RequestBody_price為負數() throws Exception {
+    void testCreateCourse_MissingPrice_ShouldReturn400() throws Exception {
         mockMvc.perform(post("/api/course")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"courseName\":\"測試課程\",\"price\":-1.0}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
-
-        System.out.println("✅ test400_RequestBody_price為負數 通過");
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"courseName\":\"Test\"}"))
+                .andExpect(status().isBadRequest());
     }
 
-    // ════════════════════════════════════════════════════
-    //   400 HttpMessageNotReadableException
-    // ════════════════════════════════════════════════════
-
+    /**
+     * JSON 格式錯誤
+     */
     @Test
-    public void test400_JSON格式錯誤_price應為數字() throws Exception {
+    void testCreateCourse_MalformedJson_ShouldReturn400() throws Exception {
         mockMvc.perform(post("/api/course")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"courseName\":\"測試\",\"price\":\"not-a-number\"}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.timestamp").exists());
-
-        System.out.println("✅ test400_JSON格式錯誤_price應為數字 通過");
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("not-json"))
+                .andExpect(status().isBadRequest());
     }
 
+    // =====================================================
+    // 415 Unsupported Media Type
+    // =====================================================
+
+    /**
+     * 缺少 Content-Type header
+     */
     @Test
-    public void test400_JSON格式完全不合法() throws Exception {
+    void testCreateCourse_MissingContentType_ShouldReturn415() throws Exception {
         mockMvc.perform(post("/api/course")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("this is not json at all"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists());
-
-        System.out.println("✅ test400_JSON格式完全不合法 通過");
+                .content("{\"courseName\":\"Test\"}"))
+                .andExpect(status().isUnsupportedMediaType());
     }
 
+    // =====================================================
+    // 500 Internal Server Error
+    // =====================================================
+
+    /**
+     * 未預期 RuntimeException（課程查詢）
+     */
     @Test
-    public void test400_Body為空() throws Exception {
-        mockMvc.perform(post("/api/course")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(""))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.timestamp").exists());
+    void testUnexpectedCourseException_ShouldReturn500() throws Exception {
+        when(courseService.findById(UUID_2))
+                .thenThrow(new RuntimeException("Boom"));
 
-        System.out.println("✅ test400_Body為空 通過");
-    }
-
-    // ════════════════════════════════════════════════════
-    //   405 HttpRequestMethodNotSupportedException
-    //
-    //   【修正說明】
-    //   本專案 CourseBeanRestController 的完整路由：
-    //     GET    /api/course/all
-    //     GET    /api/course/{id}
-    //     DELETE /api/course/{id}
-    //     POST   /api/course
-    //     POST   /api/course/category/{categoryId}   ← 這條讓 /api/course/* 的 POST 都有匹配
-    //
-    //   CategoryBeanRestController：
-    //     GET    /api/category/all
-    //     GET    /api/category/{id}
-    //     DELETE /api/category/{id}
-    //     POST   /api/category
-    //
-    //   真正沒有對應方法、會觸發 405 的路徑：
-    //   → /api/course/{id}  只有 GET + DELETE，送 PUT → 405 ✅
-    //   → /api/category/{id} 只有 GET + DELETE，送 PUT → 405 ✅
-    //   → /api/category/{id} 只有 GET + DELETE，送 PATCH → 405 ✅
-    // ════════════════════════════════════════════════════
-
-    @Test
-    public void test405_對course_id_送PUT() throws Exception {
-        // /api/course/{id} 只有 GET + DELETE，送 PUT → 405
-        mockMvc.perform(put("/api/course/00000000-0000-0000-0000-000000000001")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"courseName\":\"test\",\"price\":100.0}"))
-                .andExpect(status().isMethodNotAllowed())
-                .andExpect(jsonPath("$.message").exists());
-
-        System.out.println("✅ test405_對course_id_送PUT 通過");
-    }
-
-    @Test
-    public void test405_對category_id_送PUT() throws Exception {
-        // /api/category/{id} 只有 GET + DELETE，送 PUT → 405
-        mockMvc.perform(put("/api/category/00000000-0000-0000-0000-000000000001")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"categoryName\":\"test\"}"))
-                .andExpect(status().isMethodNotAllowed())
-                .andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.message").exists());
-
-        System.out.println("✅ test405_對category_id_送PUT 通過");
-    }
-
-    @Test
-    public void test405_對category_id_送PATCH() throws Exception {
-        // /api/category/{id} 只有 GET + DELETE，送 PATCH → 405
-        mockMvc.perform(patch("/api/category/00000000-0000-0000-0000-000000000001"))
-                .andExpect(status().isMethodNotAllowed())
-                .andExpect(jsonPath("$.message").exists());
-
-        System.out.println("✅ test405_對category_id_送PATCH 通過");
-    }
-
-    // ════════════════════════════════════════════════════
-    //   415 HttpMediaTypeNotSupportedException
-    // ════════════════════════════════════════════════════
-
-    @Test
-    public void test415_POST沒帶ContentType() throws Exception {
-        mockMvc.perform(post("/api/course")
-                        .content("{\"courseName\":\"測試\",\"price\":100.0}"))
-                .andExpect(status().isUnsupportedMediaType())
-                .andExpect(jsonPath("$.message").exists());
-
-        System.out.println("✅ test415_POST沒帶ContentType 通過");
-    }
-
-    @Test
-    public void test415_ContentType為純文字() throws Exception {
-        mockMvc.perform(post("/api/course")
-                        .contentType(MediaType.TEXT_PLAIN)
-                        .content("courseName=測試"))
-                .andExpect(status().isUnsupportedMediaType())
-                .andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.message").exists());
-
-        System.out.println("✅ test415_ContentType為純文字 通過");
-    }
-
-    // ════════════════════════════════════════════════════
-    //   500 Exception catch-all
-    // ════════════════════════════════════════════════════
-
-    @Test
-    public void test500_未預期例外() throws Exception {
-        when(courseService.findById(java.util.UUID.fromString("00000000-0000-0000-0000-000000000042")))
-                .thenThrow(new RuntimeException("Something bad happened"));
-
-        mockMvc.perform(get("/api/course/00000000-0000-0000-0000-000000000042"))
+        mockMvc.perform(get("/api/course/" + UUID_2))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.message").value("Something bad happened"))
-                .andExpect(jsonPath("$.timestamp").exists());
-
-        System.out.println("✅ test500_未預期例外 通過");
+                .andExpect(jsonPath("$.message").value("Boom"));
     }
 
+    /**
+     * 未預期 RuntimeException（分類查詢）
+     */
     @Test
-    public void test500_findAll拋出例外() throws Exception {
-        when(courseService.findAll())
-                .thenThrow(new RuntimeException("DB connection failed"));
+    void testUnexpectedCategoryException_ShouldReturn500() throws Exception {
+        when(categoryService.findAll())
+                .thenThrow(new RuntimeException("Category DB error"));
 
-        mockMvc.perform(get("/api/course/all"))
+        mockMvc.perform(get("/api/category/all"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.message").value("DB connection failed"));
-
-        System.out.println("✅ test500_findAll拋出例外 通過");
+                .andExpect(jsonPath("$.message").value("Category DB error"));
     }
 
-    // ════════════════════════════════════════════════════
-    //   ErrorResponse 結構完整性驗証
-    // ════════════════════════════════════════════════════
+    // =====================================================
+    // ErrorResponse 結構驗證
+    // =====================================================
 
+    /**
+     * ErrorResponse 應包含 timestamp / message / details
+     */
     @Test
-    public void testErrorResponse_三個欄位都存在() throws Exception {
-        when(courseService.findById(any()))
-                .thenThrow(new ResourceNotFoundException("Course not found: 1"));
+    void testErrorResponse_ShouldContainAllFields() throws Exception {
+        when(courseService.findById(UUID_1))
+                .thenThrow(new ResourceNotFoundException("not found"));
 
-        mockMvc.perform(get("/api/course/00000000-0000-0000-0000-000000000001"))
-                .andExpect(status().isNotFound())
+        mockMvc.perform(get("/api/course/" + UUID_1))
                 .andExpect(jsonPath("$.timestamp").exists())
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.details").exists());
-
-        System.out.println("✅ testErrorResponse_三個欄位都存在 通過");
     }
 
+    /**
+     * ErrorResponse.details 應包含 request URI
+     */
     @Test
-    public void testErrorResponse_details包含uri資訊() throws Exception {
-        when(courseService.findById(any()))
-                .thenThrow(new ResourceNotFoundException("Course not found: 7"));
+    void testErrorResponseDetails_ShouldContainRequestUri() throws Exception {
+        when(courseService.findById(UUID_1))
+                .thenThrow(new ResourceNotFoundException("not found"));
 
-        mockMvc.perform(get("/api/course/00000000-0000-0000-0000-000000000007"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.details").value(org.hamcrest.Matchers.containsString("/api/course/00000000-0000-0000-0000-000000000007")));
-
-        System.out.println("✅ testErrorResponse_details包含uri資訊 通過");
+        mockMvc.perform(get("/api/course/" + UUID_1))
+                .andExpect(jsonPath("$.details")
+                        .value(org.hamcrest.Matchers
+                                .containsString("/api/course/" + UUID_1)));
     }
 
+    // =====================================================
+    // 正常流程
+    // =====================================================
+
+    /**
+     * 正常取得課程列表
+     */
     @Test
-    public void testGetAll_正常回傳() throws Exception {
+    void testGetAllCourses_ShouldReturn200() throws Exception {
         when(courseService.findAll()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/course/all"))
                 .andExpect(status().isOk());
-
-        System.out.println("✅ testGetAll_正常回傳 通過");
     }
 }

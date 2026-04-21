@@ -23,4 +23,8 @@ public interface CourseBeanService {
     
     // 根據課程的 ID 刪除特定課程
     void deleteById(UUID id);
+    
+    List<CourseBean> findByCategoryId(UUID categoryId);
 }
+
+

@@ -26,32 +26,41 @@ public class SampleDataRunner4 implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-
         CourseCategoryBean cat = new CourseCategoryBean();
-        cat.setCategoryName("連帶刪除類別");
+        cat.setCategoryName("連帶變成 null 類別 (Runner 4)");
         categoryRepo.save(cat);
 
         CourseBean course1 = new CourseBean();
-        course1.setCourseName("課程X");
+        course1.setCourseName("課程 X");
         course1.setPrice(200.0);
         course1.setCategory(cat);
         courseRepo.save(course1);
 
         CourseBean course2 = new CourseBean();
-        course2.setCourseName("課程Y");
+        course2.setCourseName("課程 Y");
         course2.setPrice(300.0);
         course2.setCategory(cat);
         courseRepo.save(course2);
 
-        // 利用 Repo 計數目前的課程總數量
-        long beforeCount = courseRepo.count();
-        System.out.println("刪除前課程總數：" + beforeCount);
+        System.out.println("====== [Runner 4] 刪除前 ======");
+        System.out.println("目前課程總數：" + courseRepo.count());
 
-        // 動作進行：直接將母分類給刪除
         categoryRepo.deleteById(cat.getId());
 
-        // 預期底下原本掛著的 課程X 與 課程Y 都會隨之陪葬消滅
-        long afterCount = courseRepo.count();
-        System.out.println("✅ cascade：刪除類別後課程總數：" + afterCount);
+        System.out.println("====== [Runner 4] 刪除後 ======");
+        System.out.println("✅ 刪除類別後課程總數：" + courseRepo.count());
+
+        CourseBean foundX = courseRepo.findById(course1.getId()).orElse(null);
+        CourseBean foundY = courseRepo.findById(course2.getId()).orElse(null);
+
+        if (foundX != null) {
+            System.out.println("課程 X 的類別變成：" +
+                    (foundX.getCategory() == null ? "null" : foundX.getCategory().getCategoryName()));
+        }
+        if (foundY != null) {
+            System.out.println("課程 Y 的類別變成：" +
+                    (foundY.getCategory() == null ? "null" : foundY.getCategory().getCategoryName()));
+        }
+        System.out.println("==============================================");
     }
 }

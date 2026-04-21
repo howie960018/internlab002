@@ -1,44 +1,83 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>課程列表</title>
-    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
+<title>課程列表</title>
+<link rel="stylesheet"
+	th:href="@{/webjars/bootstrap/5.2.3/css/bootstrap.min.css}">
 </head>
 <body>
-<div class="container mt-4">
-    <h2>課程列表</h2>
-    <a th:href="@{/course/form}" class="btn btn-primary mb-3">新增課程</a>
+	<div class="container mt-4">
+		<h2>課程列表</h2>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>課程名稱</th>
-                <th>價格</th>
-                <th>類別</th>
-                <th>建立時間</th>
-                <th>修改時間</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="course : ${courses}">
-                <td th:text="${course.id}"></td>
-                <td th:text="${course.courseName}"></td>
-                <td th:text="${course.price}"></td>
-                <td th:text="${course.category != null ? course.category.categoryName : '無'}"></td>
-                <td th:text="${course.createdAt}"></td>
-                <td th:text="${course.updatedAt}"></td>
-                <td>
-                    <a th:href="@{/course/edit/{id}(id=${course.id})}"
-                       class="btn btn-sm btn-warning">編輯</a>
-                    <a th:href="@{/course/delete/{id}(id=${course.id})}"
-                       class="btn btn-sm btn-danger"
-                       onclick="return confirm('確定刪除？')">刪除</a>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+		<div class="d-flex justify-content-between align-items-center mb-3">
+			<a th:href="@{/course/form}" class="btn btn-primary">新增課程</a>
+
+			<!-- 分類篩選下拉選單 -->
+			<form th:action="@{/course/list}" method="get"
+				class="d-flex align-items-center gap-2">
+				<label for="categoryFilter" class="form-label mb-0 fw-bold">篩選類別：</label>
+				<select id="categoryFilter" name="categoryId" class="form-select"
+					style="width: 200px;" onchange="this.form.submit()">
+					<!-- 全部選項 -->
+					<option value="" th:selected="${selectedCategoryId == null}">
+						全部課程</option>
+					<!-- 各類別選項 -->
+					<option th:each="cat : ${categories}" th:value="${cat.id}"
+						th:text="${cat.categoryName}"
+						th:selected="${selectedCategoryId != null
+                                       and selectedCategoryId == cat.id}">
+					</option>
+				</select>
+				<!-- 重置按鈕 -->
+				<a th:href="@{/course/list}" class="btn btn-secondary">重置</a>
+			</form>
+		</div>
+
+		<!-- 目前篩選提示 -->
+		<div th:if="${selectedCategoryId != null}"
+			class="alert alert-info py-2">
+			目前顯示： <span th:each="cat : ${categories}"
+				th:if="${cat.id == selectedCategoryId}"
+				th:text="${cat.categoryName}" class="fw-bold"> </span> 的課程（共 <span
+				th:text="${courses.size()}"></span> 筆）
+		</div>
+
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>課程名稱</th>
+					<th>價格</th>
+					<th>類別</th>
+					<th>建立時間</th>
+					<th>修改時間</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				<!-- 有課程時顯示列表 -->
+				<tr th:each="course : ${courses}">
+					<td th:text="${course.id}"></td>
+					<td th:text="${course.courseName}"></td>
+					<td th:text="${course.price}"></td>
+					<td
+						th:text="${course.category != null
+                               ? course.category.categoryName : '無'}">
+					</td>
+					<td th:text="${course.createdAt}"></td>
+					<td th:text="${course.updatedAt}"></td>
+					<td><a th:href="@{/course/edit/{id}(id=${course.id})}"
+						class="btn btn-sm btn-warning">編輯</a> <!-- 改成這樣 --> <a
+						th:href="@{/course/delete/{id}(id=${course.id})}"
+						class="btn btn-sm btn-danger"
+						onclick="if(!confirm('確定刪除？')) event.preventDefault();">刪除</a></td>
+				</tr>
+				<!-- 沒有課程時顯示提示 -->
+				<tr th:if="${courses.isEmpty()}">
+					<td colspan="7" class="text-center text-muted">此類別尚無課程</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
 </body>
 </html>
