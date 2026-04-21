@@ -56,10 +56,6 @@ class WebControllerTest {
     private static final UUID COURSE_ID =
             UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
-    // ============================================================
-    // Home
-    // ============================================================
-
     /**
      * 首頁請求
      * 預期：顯示 home 畫面
@@ -80,6 +76,7 @@ class WebControllerTest {
      */
     @Test
     void testCategoryList_ShouldShowListPage() throws Exception {
+        
         when(categoryService.findAll())
                 .thenReturn(List.of(new CourseCategoryBean()));
 

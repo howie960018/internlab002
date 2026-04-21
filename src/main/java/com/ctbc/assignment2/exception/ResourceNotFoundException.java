@@ -5,7 +5,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * 自訂例外：當透過 ID (或其他條件) 嘗試去資料庫尋找一筆資料，卻找不到的時候拋出此例外。
- * @ResponseStatus(HttpStatus.NOT_FOUND) 代表這個例外發生時，Spring 預設會回傳 404 Not Found 的 HTTP 狀態碼。
+ * @ResponseStatus(HttpStatus.NOT_FOUND):
+ * 這個例外發生時，Spring 預設會回傳 HTTP 狀態碼 404 (Not Found)。
  */
 @ResponseStatus(HttpStatus.NOT_FOUND)
 public class ResourceNotFoundException extends RuntimeException {
